@@ -1,0 +1,132 @@
+@model System.Data.DataTable
+@{
+    ViewBag.Title = "Bookings";
+}
+<h2>Bookings</h2>
+@*<p>
+    @Html.ActionLink("Create New Booking", "Create", null, new { @class = "btn btn-success" })
+</p>*@
+<table class="table table-bordered table-striped" id="bookingTable">
+    <thead>
+        <tr>
+            <th>Booking ID</th>
+            <th>Item</th>
+            <th>Department</th>
+            <th>User</th>
+            <th>Quantity</th>
+            <th>Purpose</th>
+            <th>Date Requested</th>
+            @*<th>Date Borrowed</th>*@
+            <th>Date Returned</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="bookingBody">
+        @foreach (System.Data.DataRow row in Model.Rows)
+        {
+            <tr>
+                <td>@row["bookingID"]</td>
+                <td>@row["item_name"]</td>
+                <td>@row["departmentName"]</td>
+                <td>@row["username"]</td>
+                <td>@row["quantity"]</td>
+                <td>@row["purpose"]</td>
+                @*<td>@(row["date_requested"] != DBNull.Value ? Convert.ToDateTime(row["date_requested"]).ToString("yyyy-MM-dd") : "")</td>*@
+                <td>
+                    @(row["date_requested"] != DBNull.Value
+                        ? ((DateTime)row["date_requested"]).ToString("MM-dd-yyyy hh:mm tt")
+                        : "")
+                </td>
+                @*<td>@(row["date_borrowed"] != DBNull.Value ? Convert.ToDateTime(row["date_borrowed"]).ToString("yyyy-MM-dd") : "")</td>*@
+                <td>@(row["date_returned"] != DBNull.Value ? Convert.ToDateTime(row["date_returned"]).ToString("yyyy-MM-dd") : "")</td>
+                <td>@row["status"]</td>
+                <td>@row["remarks"]</td>
+                <td>
+                    @Html.ActionLink("Edit", "Edit", new { id = row["bookingID"] }, new { @class = "btn btn-primary btn-sm" })
+                    @Html.ActionLink("Delete", "Delete", new { id = row["bookingID"] }, new { @class = "btn btn-danger btn-sm" })
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@section Scripts {
+    <script src="~/Scripts/jquery-3.6.0.min.js"></script>
+
+    <script>
+            @*let lastBookingId = parseInt(
+    $('#bookingTable tbody tr:last td:first').text()
+) || 0;
+
+setInterval(function () {
+    $.ajax({
+        url: '@Url.Action("GetLatestBookings", "Booking")',
+        type: 'GET',
+        success: function (data) {
+            let tbody = '';
+            data.forEach(function (b) {
+                tbody += `
+                    <tr style="background-color:#e6fffa">
+                        <td>${b.bookingID}</td>
+                        <td>${b.item}</td>
+                        <td>${b.department}</td>
+                        <td>${b.user}</td>
+                        <td>${b.quantity}</td>
+                        <td>${b.purpose}</td>
+                        <td>${b.dateRequested}</td>
+                        <td>${b.dateReturned}</td>
+                        <td>${b.status}</td>
+                        <td>${b.remarks}</td>
+                        <td>
+                            <a class="btn btn-primary btn-sm" href="/Booking/Edit/${b.bookingID}">Edit</a>
+                            <a class="btn btn-danger btn-sm" href="/Booking/Delete/${b.bookingID}">Delete</a>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#bookingTable tbody').html(tbody); // REPLACE tbody completely
+        }
+    });
+}, 5000);*@
+                function refreshTable() {
+                    $.ajax({
+                        url: '@Url.Action("GetLatestBookings", "Booking")',
+                        type: 'GET',
+                        success: function (data) {
+                            let tbody = '';
+                            data.forEach(function (b) {
+                                // Check if booking is still Pending (important!)
+                                if (b.status === 'Pending') {
+                                    tbody += `
+                                    <tr>
+                                        <td>${b.bookingID}</td>
+                                        <td>${b.item}</td>
+                                        <td>${b.department}</td>
+                                        <td>${b.user}</td>
+                                        <td>${b.quantity}</td>
+                                        <td>${b.purpose}</td>
+                                        <td>${b.dateRequested}</td>
+                                        <td>${b.dateReturned}</td>
+                                        <td>${b.status}</td>
+                                        <td>${b.remarks}</td>
+                                        <td>
+                                            <a class="btn btn-primary btn-sm" href="/Booking/Edit/${b.bookingID}">Edit</a>
+                                            <a class="btn btn-danger btn-sm" href="/Booking/Delete/${b.bookingID}">Delete</a>
+                                        </td>
+                                    </tr>
+                                `;
+                                }
+                            });
+                            $('#bookingTable tbody').html(tbody);
+                        }
+                    });
+                }
+
+                // Initial load
+                refreshTable();
+
+                // Refresh every 5 seconds
+                setInterval(refreshTable, 5000);
+    </script>
+}

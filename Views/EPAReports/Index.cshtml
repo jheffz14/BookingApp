@@ -1,0 +1,90 @@
+@model BookingAppV2.ViewModels.EPAReportViewModel
+@{
+    ViewBag.Title = "EPA Reports";
+}
+
+<div class="container" id="container-body">
+    <div class="card" id="card-shadow">
+        <div class="card-header bg-primary text-white">
+            <h6 class="mb-0 text-white">EPA Reports - Total Active Buyer and Premium</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                <div class="row">
+                    <div class="col-sm">
+                        <label class="fw-bold">Choose Report</label>
+                        <select name="SelectedReport" class="form-control">
+                            <option value="">-- Select Report --</option>
+                            @foreach (var item in Model.ReportList)
+                            {
+                                if (item.Value == Model.SelectedReport)
+                                {
+                                    <option value="@item.Value" selected>@item.Text</option>
+                                }
+                                else
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm">
+                        <label class="fw-bold">Date Start</label>
+                        <input type="date" name="DateStart" class="form-control"
+                               value="@Model.DateStart.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-sm">
+                        <label class="fw-bold">Date End</label>
+                        <input type="date" name="DateEnd" class="form-control"
+                               value="@Model.DateEnd.ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="col-sm d-flex align-items-end">
+                        <button type="submit" class="btn btn-success px-4">
+                            Verify Transaction
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <hr />
+
+    @if (Model.ReportData != null && Model.ReportData.Rows.Count > 0)
+    {
+        bool enableScroll = Model.ReportData.Rows.Count >= 10;
+
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span>Report Result</span>
+                <a href="@Url.Action("ExportToExcel", "EPAReports", new { report = Model.SelectedReport, start = Model.DateStart, end = Model.DateEnd })"
+                   class="btn btn-success btn-sm">
+                    Download Excel
+                </a>
+            </div>
+            <div class="card-body @(enableScroll ? "table-scroll" : "")">
+                <table class="table table-bordered table-hover table-striped">
+                    <thead class="table-light">
+                        <tr>
+                            @foreach (System.Data.DataColumn col in Model.ReportData.Columns)
+                            {
+                                <th>@col.ColumnName</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (System.Data.DataRow row in Model.ReportData.Rows)
+                        {
+                            <tr>
+                                @foreach (var item in row.ItemArray)
+                                {
+                                    <td>@item</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>
