@@ -416,3 +416,9 @@ ASALocalRun/
 # wal and shm files - SQLite
 *-wal
 *-shm
+
+
+
+#appsetion.json
+appsettings.json
+appsettings.Development.json
