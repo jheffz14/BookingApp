@@ -7,11 +7,11 @@ public class BaseController : Controller
   public override void OnActionExecuting(ActionExecutingContext filterContext)
   {
     // 🔐 Not logged in
-    if (HttpContext.Session.GetString("UserID") == null)
+    if (HttpContext.Session.GetString("userID") == null)
     {
       filterContext.Result = new RedirectToRouteResult(
           new RouteValueDictionary(
-              new { controller = "Login", action = "Index" }
+              new { controller = "accessdenied", action = "Index" }
           )
       );
       return;

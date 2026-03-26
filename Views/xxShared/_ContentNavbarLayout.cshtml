@@ -29,15 +29,9 @@
 
 @section PageScripts{ @RenderSection("PageScripts", required: false) }
 
-@section Scripts {
-    @RenderSection("Scripts", required: false)
-}
-
 @{
   bool isMenu = ViewData["isMenu"] != null && Convert.ToBoolean(ViewData["isMenu"]);
 }
-
-
 
 <div class='layout-wrapper layout-content-navbar @(isMenu ? "" : "layout-without-menu")'>
   <div class='layout-container'>
@@ -58,7 +52,7 @@
 
 
       <!-- Content wrapper -->
-            <div class="content-wrapper" style="overflow-x: scroll; min-width: 0;">
+      <div class="content-wrapper">
 
         <!-- Content -->
         <div class='@ViewData["container"] @(Convert.ToBoolean(@ViewData["isFlex"]) ? "d-flex align-items-stretch flex-grow-1 p-0" : "flex-grow-1 container-p-y")'>
@@ -87,4 +81,3 @@
   <!-- Drag Target Area To SlideIn Menu On Small Screens -->
   <div class="drag-target"></div>
 </div>
-

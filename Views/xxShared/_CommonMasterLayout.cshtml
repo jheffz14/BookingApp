@@ -3,9 +3,6 @@
   ViewData["contentType"] = ViewData["container"] is string container && container == "container-xxl" ? "layout-compact layout-menu-fixed" : "";
 }
 
-
-
-
 @inject IHttpContextAccessor httpContextAccessor
 
 <!DOCTYPE html>
@@ -22,17 +19,17 @@
   <meta name="robots" content="noindex, nofollow" />
 
   @{
-    string title = "Dashboard";
-    string appName = "KCO";
+    string title = ViewData["title"] as string ?? "";
+    string appName = TempData.Peek("appName") as string ?? "";
     string productPage = TempData.Peek("productPage") as string ?? "";
     }
-    <title>@title | @appName -  POS UTILITIES</title>
+  <title>@title | @appName - Asp.Net Core MVC Free Admin Template</title>
   <meta name="description" content="" />
 
   <!-- Canonical SEO -->
   <link rel="canonical" href='@productPage'>
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="~/img/favicon/kcc.ico" />
+  <link rel="icon" type="image/x-icon" href="~/img/favicon/favicon.ico" />
 
   <!-- Core Styles -->
   @await Html.PartialAsync("Sections/_Styles")
@@ -46,9 +43,6 @@
   <!-- Include Scripts for customizer, helper, analytics, config -->
   @await Html.PartialAsync("Sections/_ScriptsIncludes")
 </head>
-
-
-
 
 <body>
   <!-- Layout Content -->
@@ -70,13 +64,9 @@
   <!-- Page Scripts-->
   @RenderSection("PageScripts", required: false)
 
-    <!-- Scripts -->
-    @RenderSection("Scripts", required: false)
-
   <!-- Place this tag in your head or just before your close body tag. -->
   <script async defer src="https://buttons.github.io/buttons.js"></script>
 
 </body>
 
 </html>
-

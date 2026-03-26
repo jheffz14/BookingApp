@@ -22,8 +22,8 @@ namespace BookingAppV2.Controllers
     }
     public ActionResult Index()
     {
-      string? role = HttpContext.Session.GetString("Role");
-      string? deptID = HttpContext.Session.GetString("DepartmentID");
+      string? role = HttpContext.Session.GetString("role");
+      string? deptID = HttpContext.Session.GetString("Departmentid");
 
       if (string.IsNullOrEmpty(role))
         return RedirectToAction("Index", "Login");
@@ -80,10 +80,10 @@ namespace BookingAppV2.Controllers
       ViewBag.Statuses = GetBookingStatus();
       //ViewBag.Statuses = "Pending";
 
-      string? role = HttpContext.Session.GetString("Role");
+      string? role = HttpContext.Session.GetString("role");
 
-      string? sessionDeptId = HttpContext.Session.GetString("DepartmentID");
-      string? sessionUserId = HttpContext.Session.GetString("UserID");
+      string? sessionDeptId = HttpContext.Session.GetString("Departmentid");
+      string? sessionUserId = HttpContext.Session.GetString("userID");
 
       if (role == "Superadmin" || role == "Admin")
       {
@@ -180,9 +180,9 @@ namespace BookingAppV2.Controllers
     [ValidateAntiForgeryToken]
     public ActionResult Create(Booking model)
     {
-      string? role = HttpContext.Session.GetString("Role");
-      string? sessionUserID = HttpContext.Session.GetString("UserID");
-      string? sessionDeptID = HttpContext.Session.GetString("DepartmentID");
+      string? role = HttpContext.Session.GetString("role");
+      string? sessionUserID = HttpContext.Session.GetString("userID");
+      string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
 
       if (string.IsNullOrEmpty(sessionUserID) || string.IsNullOrEmpty(sessionDeptID))
         return RedirectToAction("Index", "Login");
@@ -241,7 +241,7 @@ namespace BookingAppV2.Controllers
 
       // ===================== ADDED =====================
       // Block USERS from accessing Edit via URL if status is final
-      string? sessionRole = HttpContext.Session.GetString("Role");
+      string? sessionRole = HttpContext.Session.GetString("role");
       if (sessionRole == "Users" &&
           (booking.status == "Approved" ||
            booking.status == "Returned" ||
@@ -257,9 +257,9 @@ namespace BookingAppV2.Controllers
       ViewBag.Items = GetItems();
       ViewBag.Statuses = GetBookingStatus();
 
-      string? role = HttpContext.Session.GetString("Role");
-      string? sessionDeptId = HttpContext.Session.GetString("DepartmentID");
-      string? sessionUserId = HttpContext.Session.GetString("UserID");
+      string? role = HttpContext.Session.GetString("role");
+      string? sessionDeptId = HttpContext.Session.GetString("Departmentid");
+      string? sessionUserId = HttpContext.Session.GetString("userID");
 
       if (role == "Superadmin" || role == "Admin")
       {
@@ -290,9 +290,9 @@ namespace BookingAppV2.Controllers
     [ValidateAntiForgeryToken]
     public ActionResult Edit(Booking model)
     {
-      string? role = HttpContext.Session.GetString("Role");
-      string? sessionUserID = HttpContext.Session.GetString("UserID");
-      string? sessionDeptID = HttpContext.Session.GetString("DepartmentID");
+      string? role = HttpContext.Session.GetString("role");
+      string? sessionUserID = HttpContext.Session.GetString("userID");
+      string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
       var existingBooking = GetBookingById(model.bookingid);
 
       // ===================== ADDED =====================
@@ -399,7 +399,7 @@ namespace BookingAppV2.Controllers
       }
 
       // Users cannot delete approved bookings
-      string? sessionRole = HttpContext.Session.GetString("Role");
+      string? sessionRole = HttpContext.Session.GetString("role");
       if (sessionRole == "Users" &&
          (existingBooking.status == "Approved" ||
           existingBooking.status == "Returned" ||
@@ -541,8 +541,8 @@ namespace BookingAppV2.Controllers
     [HttpGet]
     public JsonResult GetLatestBookings()
     {
-      string? role = HttpContext.Session.GetString("Role");
-      string? deptID = HttpContext.Session.GetString("DepartmentID");
+      string? role = HttpContext.Session.GetString("role");
+      string? deptID = HttpContext.Session.GetString("Departmentid");
 
       if (string.IsNullOrEmpty(role))
         return Json(new List<object>());

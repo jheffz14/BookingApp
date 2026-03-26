@@ -1,0 +1,211 @@
+@model System.Data.DataTable
+@{
+    ViewBag.Title = "Bookings";
+}
+<script>
+       // serialize into a JS string literal to avoid breaking JS if role contains quotes
+    var currentRole = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Context.Session.GetString("role") ?? ""));
+</script>
+<h2>Bookings</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+<p>
+    @Html.ActionLink("Create New Booking", "Create", null, new { @class = "btn btn-success" })
+</p>
+<table class="table table-bordered table-striped" id="bookingTable">
+    <thead>
+        <tr>
+            <th>Booking ID</th>
+            <th>Item</th>
+            <th>Department</th>
+            <th>User</th>
+            <th>Quantity</th>
+            <th>Purpose</th>
+            <th>Date Requested</th>
+            @*<th>Date Borrowed</th>*@
+            <th>Date Returned</th>
+            <th>Status</th>
+            <th>Remarks</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody id="bookingBody">
+        @if (Model != null && Model.Rows.Count > 0)
+        {
+            foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["bookingID"]</td>
+                    <td>@row["item_name"]</td>
+                    <td>@row["departmentName"]</td>
+                    <td>@row["userID"]</td>
+                    <td>@row["quantity"]</td>
+                    <td>@row["purpose"]</td>
+                    @*<td>@(row["date_requested"] != DBNull.Value ? ((DateTime)row["date_requested"]).ToString("yyyy-MM-dd") : "")</td>*@
+                    <td>
+                        @(row["date_requested"] != DBNull.Value
+                        ? ((DateTime)row["date_requested"]).ToString("MM-dd-yyyy hh:mm tt")
+                        : "")
+                    </td>
+
+                    @*<td>@(row["date_borrowed"] != DBNull.Value ? ((DateTime)row["date_borrowed"]).ToString("yyyy-MM-dd") : "")</td>*@
+                    <td>@(row["date_returned"] != DBNull.Value ? ((DateTime)row["date_returned"]).ToString("yyyy-MM-dd") : "")</td>
+                    <td>@row["status"]</td>
+                    <td>@row["remarks"]</td>
+                    <td>
+                        @*@Html.ActionLink("Edit", "Edit", new { id = row["bookingID"] }, new { @class = "btn btn-primary btn-sm" })
+                    @Html.ActionLink("Delete", "Delete", new { id = row["bookingID"] }, new { @class = "btn btn-danger btn-sm" })*@
+                        @{
+                            string status = row["status"].ToString();
+                            string role = Context.Session.GetString("role") ?? "";
+
+                            // Users cannot edit approved bookings
+                            if (role != "Users" || status != "Approved")
+                            {
+                                @Html.ActionLink("Edit", "Edit", new { id = row["bookingID"] }, new { @class = "btn btn-primary btn-sm" })
+                                @Html.ActionLink("Delete", "Delete", new { id = row["bookingID"] }, new { @class = "btn btn-danger btn-sm" })
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary btn-sm" disabled>Edit</button>
+                                <button class="btn btn-secondary btn-sm" disabled>Delete</button>
+                            }
+                        }
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="11" class="text-center">No bookings found.</td>
+            </tr>
+        }
+           
+        
+    </tbody>
+</table>
+@section Scripts {
+    <script src="~/Scripts/jquery-3.6.0.min.js"></script>
+
+    <script>
+
+        function renderBookings(data) {
+            let tbody = '';
+            data.forEach(function(b) {
+                let canEditDelete = !(currentRole === 'Users' &&
+                                      (b.status === 'Approved' ||
+                                       b.status === 'Returned' ||
+                                       b.status === 'Disapproved'));
+
+                let editButton = canEditDelete
+                    ? `<a class="btn btn-primary btn-sm" href="/UsersBooking/Edit/${b.bookingID}">Edit</a>`
+                    : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
+
+                let deleteButton = canEditDelete
+                    ? `<a class="btn btn-danger btn-sm" href="/UsersBooking/Delete/${b.bookingID}">Delete</a>`
+                    : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
+
+                tbody += `
+                    <tr>
+                        <td>${b.bookingID}</td>
+                        <td>${b.item}</td>
+                        <td>${b.department}</td>
+                        <td>${b.user}</td>
+                        <td>${b.quantity}</td>
+                        <td>${b.purpose}</td>
+                        <td>${b.dateRequested}</td>
+                        <td>${b.dateReturned}</td>
+                        <td>${b.status}</td>
+                        <td>${b.remarks}</td>
+                        <td>${editButton} ${deleteButton}</td>
+                    </tr>
+                `;
+            });
+            $('#bookingTable tbody').html(tbody);
+            }
+
+            //function renderBookings(data) {
+
+            //    let existingIds = new Set();
+
+            //    data.forEach(function (b) {
+
+            //        existingIds.add(String(b.bookingID));
+
+            //        let canEditDelete = !(currentRole === 'Users' &&
+            //            (b.status === 'Approved' ||
+            //             b.status === 'Returned' ||
+            //             b.status === 'Disapproved'));
+
+            //        let editButton = canEditDelete
+            //            ? `<a class="btn btn-primary btn-sm" href="/UserBooking/Edit/${b.bookingID}">Edit</a>`
+            //            : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
+
+            //        let deleteButton = canEditDelete
+            //            ? `<a class="btn btn-danger btn-sm" href="/UserBooking/Delete/${b.bookingID}">Delete</a>`
+            //            : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
+
+            //        let rowHtml = `
+            //        <tr data-booking-id="${b.bookingID}">
+            //            <td>${b.bookingID}</td>
+            //            <td>${b.item}</td>
+            //            <td>${b.department}</td>
+            //            <td>${b.user}</td>
+            //            <td>${b.quantity}</td>
+            //            <td>${b.purpose}</td>
+            //            <td>${b.dateRequested}</td>
+            //            <td>${b.dateReturned}</td>
+            //            <td class="status-cell">${b.status}</td>
+            //            <td>${b.remarks}</td>
+            //            <td>${editButton} ${deleteButton}</td>
+            //        </tr>
+            //    `;
+
+            //        let existingRow = $(`#bookingTable tr[data-booking-id="${b.bookingID}"]`);
+
+            //        if (existingRow.length === 0) {
+            //            // 🆕 NEW ROW
+            //            $('#bookingTable tbody').prepend(rowHtml);
+            //        } else {
+            //            // 🔄 UPDATE ONLY IF STATUS CHANGED
+            //            let currentStatus = existingRow.find('.status-cell').text();
+            //            if (currentStatus !== b.status) {
+            //                existingRow.replaceWith(rowHtml);
+            //            }
+            //        }
+            //    });
+
+            //    // ❌ REMOVE DELETED BOOKINGS
+            //    $('#bookingTable tbody tr').each(function () {
+            //        let id = $(this).data('booking-id');
+            //        if (!existingIds.has(String(id))) {
+            //            $(this).remove();
+            //        }
+            //    });
+            //}
+
+
+        // Initial load
+        $.ajax({
+            url: '@Url.Action("GetLatestBookings", "UserBooking")',
+            type: 'GET',
+            success: renderBookings
+        });
+
+        // Refresh every 5 seconds
+        setInterval(function () {
+            $.ajax({
+                url: '@Url.Action("GetLatestBookings", "UserBooking")',
+                type: 'GET',
+                success: renderBookings
+            });
+        }, 5000);
+    </script>
+}

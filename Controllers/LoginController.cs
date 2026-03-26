@@ -7,7 +7,7 @@ using System.Data;
 using System.Data.OleDb;
 
 
-namespace BookingApp.Controllers
+namespace BookingAppV2.Controllers
 {
   public class LoginController : Controller
   {
@@ -40,22 +40,22 @@ namespace BookingApp.Controllers
         string departmentID = dt.Rows[0]["Departmentid"].ToString();
 
         // store session (ASP.NET Core)
-        HttpContext.Session.SetString("UserID", userID);
-        HttpContext.Session.SetString("Role", role);
+        HttpContext.Session.SetString("userID", userID);
+        HttpContext.Session.SetString("role", role);
         HttpContext.Session.SetString("Departmentid", departmentID);
 
         string deptID = HttpContext.Session.GetString("Departmentid");
-        string roles = HttpContext.Session.GetString("Role");
+        string roles = HttpContext.Session.GetString("role");
 
         // role-based redirect
         if (role == "Admin")
-          return RedirectToAction("Index", "Dashboards");
+          return RedirectToAction("Index", "UserBooking");
 
         if (role == "Superadmin")
           return RedirectToAction("Index", "Dashboards");
 
         if (role == "Users")
-          return RedirectToAction("Index", "Dashboards");
+          return RedirectToAction("Index", "UserBooking");
         // fallback
         return RedirectToAction("Index", "Home");
       }

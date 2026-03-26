@@ -2,7 +2,22 @@
   TempData.Keep();
   string? currentPage = ViewContext.HttpContext.Request.Path;
 }
+<style>
+    #logoutID {
+    margin-left:30px;
+    }
 
+     #toggleON {
+        margin-left:30px;
+        margin-top:10px;
+        margin-bottom: 10px;
+        }
+        #toggleOFF {
+        margin-left: 30px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+        }
+</style>
 <!-- Menu -->
 @* ! Do this simple *@
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
@@ -13,7 +28,6 @@
       <span class="app-brand-logo demo">
         @await Html.PartialAsync("../_Partials/_Macros")
       </span>
-      <span class="app-brand-text demo menu-text fw-bold ms-2">@TempData.Peek("appName")</span>
     </a>
 
     <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
@@ -33,30 +47,185 @@
       <a href="javascript:void(0);" class="menu-link menu-toggle">
         <i class="menu-icon icon-base bx bx-home-smile"></i>
         <div class="text-truncate" data-i18n="Dashboards">Dashboards</div>
-        <span class="badge rounded-pill bg-danger ms-auto">5</span>
+     @*    <span class="badge rounded-pill bg-danger ms-auto">5</span> *@
       </a>
       <ul class="menu-sub">
         <li class='menu-item@(currentPage == "/" ? " active" : "")'>
           <a asp-controller="Dashboards" asp-action="Index" class="menu-link">
-            <div class="text-truncate">Analytics</div>
+            <div class="text-truncate">KCO POS TEAM</div>
           </a>
         </li>  
       </ul>
     </li>
 
-    <!--EPA REPORTS-->
-        @if (Context.Session.GetString("userID") != null)
+   
+
+        <!-- Utilities -->
+        @{
+            var userType = Context.Session.GetString("role");
+            var userName = Context.Session.GetString("userID");
+
+            // Define menu items per role — easy to add new ones here
+            var adminMenuItems = new List<(string Controller, string Label, string Icon)>
+                {
+                ("Booking",    "Booking Viewer", "bx-receipt"),
+                ("EPAReports",     "EPA Reports",        "bx-bar-chart-alt-2"), 
+                };
+
+            var superAdminMenuItems = new List<(string Controller, string Label, string Icon)>
+                {
+                ("Users", "Users", "bx-user"),
+                };
+            var usersMenuItems = new List<(string Controller, string Label, string Icon)>
+                {
+                ("UserBooking",    "Booking Viewer",       "bx-user-plus"),
+                };
+        }
+
+        <li class='menu-item@(currentPage.StartsWith("/Booking") ||
+                              currentPage.StartsWith("/UserBooking") ||                          
+                              currentPage.StartsWith("/Users") ? " active open" : "")'>
+            <a href="javascript:void(0);" class="menu-link menu-toggle">
+                <i class="menu-icon icon-base bx bx-wrench"></i>
+                <div class="text-truncate">POS Utilities</div>
+            </a>
+
+            <ul class="menu-sub">
+                @if (userName != null)
+                {
+                    @if (userType == "Admin")
+                    {
+                        @foreach (var item in adminMenuItems)
+                        {
+                            <li class='menu-item@(currentPage.StartsWith("/" + item.Controller) ? " active" : "")'>
+                                <a href="@Url.Action("Index", item.Controller)" class="menu-link">
+                                    <i class="menu-icon tf-icons bx @item.Icon"></i>
+                                    <div>@item.Label</div>
+                                </a>
+                            </li>
+                        }
+                    }
+                    else if (userType == "Superadmin")
+                    {
+                        @foreach (var item in superAdminMenuItems)
+                        {
+                            <li class='menu-item@(currentPage.StartsWith("/" + item.Controller) ? " active" : "")'>
+                                <a href="@Url.Action("Index", item.Controller)" class="menu-link">
+                                    <i class="menu-icon tf-icons bx @item.Icon"></i>
+                                    <div>@item.Label</div>
+                                </a>
+                            </li>
+                        }
+
+
+                        <!-- Maintenance toggle -->
+                       @*  @if (POSUTILSv4.Helpers.MaintenanceMode.IsEnabled)
+                        {
+                            <li class="menu-item px-3 py-1">
+                                <a href="@Url.Action("ToggleMaintenance", "Pages")"
+                                   class="btn btn-success btn-sm w-100"
+                                   onclick="return confirm('Turn OFF maintenance mode?')">
+                                    <i class="bx bx-check-circle me-1"></i> Maintenance ON — Turn OFF
+                                </a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="menu-item px-3 py-1">
+                                <a href="@Url.Action("ToggleMaintenance", "Pages")"
+                                   class="btn btn-danger btn-sm w-100"
+                                   onclick="return confirm('Turn ON maintenance mode?')">
+                                    <i class="bx bx-wrench me-1"></i> Turn ON Maintenance
+                                </a>
+                            </li>
+                        } *@
+
+                    }
+                    else if (userType == "Users")
+                    {
+                        @foreach (var item in usersMenuItems)
+                        {
+                            <li class='menu-item@(currentPage.StartsWith("/" + item.Controller) ? " active" : "")'>
+                                <a href="@Url.Action("Index", item.Controller)" class="menu-link">
+                                    <i class="menu-icon tf-icons bx @item.Icon"></i>
+                                    <div>@item.Label</div>
+                                </a>
+                            </li>
+                        }
+                    }
+
+
+                }
+            </ul>
+        </li>
+
+        <!-- END -->
+
+
+
+
+   
+    <!-- Logout -->
+       
+        <li>
+            <a class="dropdown-item" asp-controller="Login" asp-action="Logout" id="logoutLbl" >
+                <i class="icon-base bx bx-power-off icon-md me-3" id="logoutID"></i><span>Log Out</span>
+            </a>
+        </li>
+  </ul>
+
+</aside>
+<!-- / Menu -->
+
+
+
+
+
+     <!--Done delete for reference-->
+<!-- Utilities -->
+@* <li class='menu-item@(currentPage.EndsWith("/") ? " active open" : "")'>
+    <a href="javascript:void(0);" class="menu-link menu-toggle">
+        <i class="menu-icon icon-base bx bx-layout"></i>
+        <div class="text-truncate">POS Utilities</div>
+    </a>
+    <ul class="menu-sub">
+        <!--POS-->
+        @if (Context.Session.GetString("user_name") != null)
         {
-            if (Context.Session.GetString("Role") == "Admin")
+            if (Context.Session.GetString("user_type") == "Admin")
             {
+                <li class="menu-item">
+                    <a href="@Url.Action("Index", "TransViewer")" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-file"></i>
+                        <div>Transaction Viewer</div>
+                    </a>
+                </li>
                 <li class="menu-item">
                     <a href="@Url.Action("Index", "EPAReports")" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-file"></i>
                         <div>EPA Reports</div>
                     </a>
                 </li>
+                <li class="menu-item">
+                    <a href="@Url.Action("Index", "AddEmployee")" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-file"></i>
+                        <div>Add Employee</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="@Url.Action("Index", "MultiBuy")" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-file"></i>
+                        <div>Promo Checker</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="@Url.Action("Index", "SaleValidation")" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-file"></i>
+                        <div>Sale Validation</div>
+                    </a>
+                </li>
             }
-            else if (Context.Session.GetString("Role") == "SuperAdmin")
+            else if (Context.Session.GetString("user_type") == "SuperAdmin")
             {
                 <li class="menu-item">
                     <a href="@Url.Action("Index", "Users")" class="menu-link">
@@ -64,301 +233,23 @@
                         <div>Users</div>
                     </a>
                 </li>
+                if (POSUTILSv4.Helpers.MaintenanceMode.IsEnabled)
+                {
+                    <a id="toggleOFF" href="@Url.Action("ToggleMaintenance", "Pages")"
+                       class="btn btn-success btn-sm me-2"
+                       onclick="return confirm('Turn OFF maintenance mode? Site will be back to normal.')">
+                        <i class="bx bx-check-circle me-1"></i> Maintenance ON — Turn OFF
+                    </a>
+                }
+                else
+                {
+                    <a id="toggleON" href="@Url.Action("ToggleMaintenance", "Pages")"
+                       class="btn btn-danger btn-sm me-2"
+                       onclick="return confirm('Turn ON maintenance mode? All non-SuperAdmin users will be blocked.')">
+                        <i class="bx bx-wrench me-1"></i> Turn ON Maintenance
+                    </a>
+                }
             }
         }
-
-    <!-- Layouts -->
-    <li class='menu-item@(currentPage.StartsWith("/LayoutExamples") ? " active open" : "")'>
-      <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-layout"></i>
-        <div class="text-truncate">Layouts</div>
-      </a>
-
-      <ul class="menu-sub">
-
-        <li class='menu-item@(currentPage == "/LayoutExamples/WithoutMenu" ? " active" : "")'>
-          <a asp-controller="LayoutExamples" asp-action="WithoutMenu" class="menu-link">
-            <div class="text-truncate">Without menu</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/LayoutExamples/WithoutNavbar" ? " active" : "")'>
-          <a asp-controller="LayoutExamples" asp-action="WithoutNavbar" class="menu-link">
-            <div class="text-truncate">Without navbar</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/LayoutExamples/Fluid" ? " active" : "")'>
-          <a asp-controller="LayoutExamples" asp-action="Fluid" class="menu-link">
-            <div class="text-truncate">Fluid</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/LayoutExamples/Container" ? " active" : "")'>
-          <a asp-controller="LayoutExamples" asp-action="Container" class="menu-link">
-            <div class="text-truncate">Container</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/LayoutExamples/Blank" ? " active" : "")'>
-          <a asp-controller="LayoutExamples" asp-action="Blank" class="menu-link">
-            <div class="text-truncate">Blank</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-
-   
-    <!-- Apps & Pages -->
-    <li class="menu-header small text-uppercase">
-      <span class="menu-header-text">Apps &amp; Pages</span>
-    </li>
-    <!-- Apps -->
-   
-    <!-- Pages -->
-    <li class='menu-item@(currentPage.StartsWith("/Pages/Account") ? " active open" : "")'>
-      <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-dock-top"></i>
-        <div class="text-truncate">Account Settings</div>
-      </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/Pages/AccountSettings" ? " active" : "")'>
-          <a asp-controller="Pages" asp-action="AccountSettings" class="menu-link">
-            <div class="text-truncate">Account</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Pages/AccountSettingsNotifications" ? " active" : "")'>
-          <a asp-controller="Pages" asp-action="AccountSettingsNotifications" class="menu-link">
-            <div class="text-truncate">Notifications</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Pages/AccountSettingsConnections" ? " active" : "")'>
-          <a asp-controller="Pages" asp-action="AccountSettingsConnections" class="menu-link">
-            <div class="text-truncate">Connections</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-    
-    <li class='menu-item@(currentPage.StartsWith("/Pages/Misc") ? " active open" : "")'>
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-cube-alt"></i>
-        <div class="text-truncate">Misc</div>
-      </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/Pages/MiscError" ? " active" : "")'>
-          <a asp-controller="Pages" asp-action="MiscError" class="menu-link" target="_blank">
-            <div class="text-truncate">Error</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Pages/MiscUnderMaintenance" ? " active" : "")'>
-          <a asp-controller="Pages" asp-action="MiscUnderMaintenance" class="menu-link" target="_blank">
-          <div class="text-truncate">Under Maintenance</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-    <!-- Components -->
-    <li class="menu-header small text-uppercase"><span class="menu-header-text">Components</span></li>
-    <!-- Cards -->
-    <li class='menu-item@(currentPage == "/Cards/Basic" ? " active" : "")'>
-      <a asp-controller="Cards" asp-action="Basic" class="menu-link">
-        <i class="menu-icon icon-base bx bx-collection"></i>
-        <div class="text-truncate" data-i18n="Cards">Cards</div>
-      </a>
-    </li>
-    <!-- User interface -->
-    <li class='menu-item@(currentPage.StartsWith("/Ui") ? " active open" : "")'>
-      <a href="javascript:void(0)" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-box"></i>
-        <div class="text-truncate">User interface</div>
-      </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/Ui/Accordion" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Accordion" class="menu-link">
-            <div class="text-truncate">Accordion</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Alerts" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Alerts" class="menu-link">
-            <div class="text-truncate">Alerts</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Badges" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Badges" class="menu-link">
-            <div class="text-truncate">Badges</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Buttons" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Buttons" class="menu-link">
-            <div class="text-truncate">Buttons</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Carousel" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Carousel" class="menu-link">
-            <div class="text-truncate">Carousel</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Collapse" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Collapse" class="menu-link">
-            <div class="text-truncate">Collapse</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Dropdowns" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Dropdowns" class="menu-link">
-            <div class="text-truncate">Dropdowns</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Footer" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Footer" class="menu-link">
-            <div class="text-truncate">Footer</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/ListGroups" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="ListGroups" class="menu-link">
-            <div class="text-truncate">List groups</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Modals" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Modals" class="menu-link">
-            <div class="text-truncate">Modals</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Navbar" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Navbar" class="menu-link">
-            <div class="text-truncate">Navbar</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Offcanvas" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Offcanvas" class="menu-link">
-            <div class="text-truncate">Offcanvas</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/PaginationBreadcrumbs" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="PaginationBreadcrumbs" class="menu-link">
-            <div class="text-truncate">Pagination &amp; Breadcrumbs</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Progress" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Progress" class="menu-link">
-            <div class="text-truncate">Progress</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Spinners" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Spinners" class="menu-link">
-            <div class="text-truncate">Spinners</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/TabsPills" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="TabsPills" class="menu-link">
-            <div class="text-truncate">Tabs &amp; Pills</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Toasts" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Toasts" class="menu-link">
-            <div class="text-truncate">Toasts</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/TooltipsPopovers" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="TooltipsPopovers" class="menu-link">
-            <div class="text-truncate">Tooltips &amp; Popovers</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Ui/Typography" ? " active" : "")'>
-          <a asp-controller="Ui" asp-action="Typography" class="menu-link">
-            <div class="text-truncate">Typography</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-
-    <!-- Extended components -->
-    <li class='menu-item@(currentPage.StartsWith("/ExtendedUi") ? " active open" : "")'>
-      <a href="javascript:void(0)" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-copy"></i>
-        <div class="text-truncate">Extended UI</div>
-      </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/ExtendedUi/PerfectScrollbar" ? " active" : "")'>
-          <a asp-controller="ExtendedUi" asp-action="PerfectScrollbar" class="menu-link">
-            <div class="text-truncate">Perfect scrollbar</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/ExtendedUi/TextDivider" ? " active" : "")'>
-          <a asp-controller="ExtendedUi" asp-action="TextDivider" class="menu-link">
-            <div class="text-truncate">Text Divider</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-
-    <!-- Icons -->
-    <li class='menu-item@(currentPage == "/Icons/Boxicons" ? " active" : "")'>
-      <a asp-controller="Icons" asp-action="Boxicons" class="menu-link">
-        <i class="menu-icon icon-base bx bx-crown"></i>
-        <div class="text-truncate">Boxicons</div>
-      </a>
-    </li>
-
-    <!-- Forms & Tables -->
-    <li class="menu-header small text-uppercase"><span class="menu-header-text">Forms &amp; Tables</span></li>
-    <!-- Forms -->
-    <li class='menu-item@(currentPage.StartsWith("/Forms") ? " active open" : "")'>
-      <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-detail"></i>
-        <div class="text-truncate">Form Elements</div>
-      </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/Forms/BasicInputs" ? " active" : "")'>
-          <a asp-controller="Forms" asp-action="BasicInputs" class="menu-link">
-            <div class="text-truncate">Basic Inputs</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/Forms/InputGroups" ? " active" : "")'>
-          <a asp-controller="Forms" asp-action="InputGroups" class="menu-link">
-            <div class="text-truncate">Input groups</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-    <li class='menu-item@(currentPage.StartsWith("/FormLayouts") ? " active open" : "")'>
-      <a href="javascript:void(0);" class="menu-link menu-toggle">
-        <i class="menu-icon icon-base bx bx-detail"></i>
-        <div class="text-truncate">Form Layouts</div>
-      </a>
-      <ul class="menu-sub">
-        <li class='menu-item@(currentPage == "/FormLayouts/Vertical" ? " active" : "")'>
-          <a asp-controller="FormLayouts" asp-action="Vertical" class="menu-link">
-            <div class="text-truncate">Vertical Form</div>
-          </a>
-        </li>
-        <li class='menu-item@(currentPage == "/FormLayouts/Horizontal" ? " active" : "")'>
-          <a asp-controller="FormLayouts" asp-action="Horizontal" class="menu-link">
-            <div class="text-truncate">Horizontal Form</div>
-          </a>
-        </li>
-      </ul>
-    </li>
-  
-    <!-- Tables -->
-    <li class='menu-item@(currentPage == "/Tables/Basic" ? " active" : "")'>
-      <a asp-controller="Tables" asp-action="Basic" class="menu-link">
-        <i class="menu-icon icon-base bx bx-table"></i>
-        <div class="text-truncate">Tables</div>
-      </a>
-    </li>
-   
-    <!-- Misc -->
-    <li class="menu-header small text-uppercase"><span class="menu-header-text">Misc</span></li>
-    <li class="menu-item">
-      <a href='@TempData.Peek("support")' target="_blank" class="menu-link">
-        <i class="menu-icon icon-base bx bx-support"></i>
-        <div class="text-truncate">Support</div>
-      </a>
-    </li>
-    <li class="menu-item">
-      <a href='@TempData.Peek("documentation")' target="_blank" class="menu-link">
-        <i class="menu-icon icon-base bx bx-file"></i>
-        <div class="text-truncate">Documentation</div>
-      </a>
-    </li>
-  </ul>
-
-</aside>
-<!-- / Menu -->
+    </ul>
+</li> *@

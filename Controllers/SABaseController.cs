@@ -8,9 +8,9 @@ namespace BookingAppV2.Controllers
     public override void OnActionExecuting(ActionExecutingContext filterContext)
     {
       // 🔐 Not logged in
-      if (HttpContext.Session.GetString("user_name") == null)
+      if (HttpContext.Session.GetString("UserID") == null)
       {
-        filterContext.Result = RedirectToAction("Index", "Login");
+        filterContext.Result = RedirectToAction("Index", "AccessDenied");
         return;
       }
       base.OnActionExecuting(filterContext);
@@ -18,8 +18,8 @@ namespace BookingAppV2.Controllers
 
     protected bool IsSuperAdmin()
     {
-      var role = HttpContext.Session.GetString("user_type");
-      return role == "SuperAdmin";
+      var role = HttpContext.Session.GetString("Role");
+      return role == "Superadmin";
     }
   }
 }
