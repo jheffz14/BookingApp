@@ -65,7 +65,7 @@ namespace BookingAppV2.Controllers
             INNER JOIN Department AS D ON B.departmentID = D.departmentID)
             ORDER BY B.bookingID DESC";
       }
-
+      ViewBag.Items = GetItems(); // ✅ ADD HERE before return
       DataTable dt = _dbAccess.ExecuteQueryBooking(query, parameters);
       return View(dt);
     }
@@ -282,7 +282,9 @@ namespace BookingAppV2.Controllers
       // Pre-select values for the dropdowns
       ViewBag.SelectedDepartmentID = booking.departmentID;
       ViewBag.SelectedUserID = booking.userID;
-      return View(booking);
+      //return View("Index");
+      return RedirectToAction("Index");
+
     }
 
     // POST: Booking/Edit/5
@@ -295,8 +297,12 @@ namespace BookingAppV2.Controllers
       string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
       var existingBooking = GetBookingById(model.bookingid);
 
-      // ===================== ADDED =====================
-      // Final server-side protection (even if user bypasses UI or uses Postman)
+      if (existingBooking == null)
+      {
+        TempData["Error"] = "Booking not found.";
+        return RedirectToAction("Index");
+      }
+
       if (role == "Users" &&
           (existingBooking.status == "Approved" ||
            existingBooking.status == "Returned" ||
@@ -305,62 +311,119 @@ namespace BookingAppV2.Controllers
         TempData["Error"] = "You cannot edit this booking because it is already finalized.";
         return RedirectToAction("Index");
       }
-      // =================== END ADDED ===================
 
-
-      // 🔒 Force values for NORMAL USERS
       if (role == "Users")
       {
         model.userID = sessionUserID!;
         model.departmentID = sessionDeptID!;
-        model.status = GetBookingStatus().First().Value;
-      }
-      if (ModelState.IsValid)
-      {
-        var parameters = new List<OleDbParameter>
-        {
-            new OleDbParameter("?", model.itemID),
-            new OleDbParameter("?", model.departmentID ?? ""),  // if short text
-            new OleDbParameter("?", model.userID),
-            new OleDbParameter("?", model.quantity),
-            new OleDbParameter("?", string.IsNullOrEmpty(model.purpose) ? "" : model.purpose),
-            new OleDbParameter("?", model.date_requested.HasValue ? (object)model.date_requested.Value : DBNull.Value),
-            new OleDbParameter("?", model.date_returned.HasValue ? (object)model.date_returned.Value : DBNull.Value),
-            //new OleDbParameter("?", model.status ?? ""),
-            new OleDbParameter("?", model.bookingid)
-        };
-
-        string query = @"UPDATE BookingTrans 
-                         SET itemID = ?, departmentID = ?, userID = ?, quantity = ?,purpose = ?, date_requested = ?, 
-                              date_returned = ?
-                         WHERE bookingID = ?";
-        _dbAccess.ExecuteNonQueryBooking(query, parameters);
-
-        return RedirectToAction("Index");
+        model.status = "Pending";
       }
 
-      // Repopulate dropdowns in case of validation errors
-      ViewBag.Items = GetItems();
-      ViewBag.Statuses = GetBookingStatus();
+      // ✅ REMOVED ModelState.IsValid check
+      // WHY: Your modal only sends bookingid, date_requested, status, remarks.
+      // Fields like itemID, quantity, purpose are NOT in the modal form.
+      // ModelState.IsValid checks ALL fields of the Booking model —
+      // since those fields are missing/null, it returns FALSE and
+      // skips the update entirely, so nothing gets saved.
 
-      if (role == "Superadmin" || role == "Admin")
-      {
-        ViewBag.Departments = GetDepartments();
-        ViewBag.Users = GetUsers();
-      }
-      else
-      {
-        ViewBag.Departments = GetDepartments()
-            .Where(d => d.Value == sessionDeptID)
-            .ToList();
+      // ✅ CHANGED: Only update the 3 fields the modal actually sends
+      // WHY: Your old query tried to update itemID, departmentID, quantity, etc.
+      // but those values are null/empty because the modal doesnt have those inputs.
+      // Updating with null/empty would corrupt your existing data.
+      string query = @"UPDATE BookingTrans 
+                     SET date_requested = ?, status = ?, remarks = ?
+                     WHERE bookingID = ?";
 
-        ViewBag.Users = GetUsers()
-            .Where(u => u.Value == sessionUserID)
-            .ToList();
-      }
+      // ✅ CHANGED: Parameters now match the new query (only 4 instead of 8)
+      var parameters = new List<OleDbParameter>
+    {
+        new OleDbParameter("?", model.date_requested.HasValue
+            ? (object)model.date_requested.Value
+            : DBNull.Value),
+        new OleDbParameter("?", model.status ?? existingBooking.status),
+        new OleDbParameter("?", model.remarks ?? ""),
+        new OleDbParameter("?", model.bookingid)
+    };
 
-      return View(model);
+      _dbAccess.ExecuteNonQueryBooking(query, parameters);
+      return RedirectToAction("Index");
     }
+    //[HttpPost]
+    //[ValidateAntiForgeryToken]
+    //public ActionResult Edit(Booking model)
+    //{
+    //  string? role = HttpContext.Session.GetString("role");
+    //  string? sessionUserID = HttpContext.Session.GetString("userID");
+    //  string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
+    //  var existingBooking = GetBookingById(model.bookingid);
+
+    //  // ===================== ADDED =====================
+    //  // Final server-side protection (even if user bypasses UI or uses Postman)
+    //  if (role == "Users" &&
+    //      (existingBooking.status == "Approved" ||
+    //       existingBooking.status == "Returned" ||
+    //       existingBooking.status == "Disapproved"))
+    //  {
+    //    TempData["Error"] = "You cannot edit this booking because it is already finalized.";
+    //    return RedirectToAction("Index");
+    //  }
+    //  // =================== END ADDED ===================
+
+
+    //  // 🔒 Force values for NORMAL USERS
+    //  if (role == "Users")
+    //  {
+    //    model.userID = sessionUserID!;
+    //    model.departmentID = sessionDeptID!;
+    //    model.status = GetBookingStatus().First().Value;
+    //  }
+    //  if (ModelState.IsValid)
+    //  {
+    //    var parameters = new List<OleDbParameter>
+    //    {
+    //        new OleDbParameter("?", model.itemID),
+    //        new OleDbParameter("?", model.departmentID ?? ""),  // if short text
+    //        new OleDbParameter("?", model.userID),
+    //        new OleDbParameter("?", model.quantity),
+    //        new OleDbParameter("?", string.IsNullOrEmpty(model.purpose) ? "" : model.purpose),
+    //        new OleDbParameter("?", model.date_requested.HasValue ? (object)model.date_requested.Value : DBNull.Value),
+    //        new OleDbParameter("?", model.date_returned.HasValue ? (object)model.date_returned.Value : DBNull.Value),
+    //        //new OleDbParameter("?", model.status ?? ""),
+    //        new OleDbParameter("?", model.bookingid)
+    //    };
+
+    //    string query = @"UPDATE BookingTrans 
+    //                     SET itemID = ?, departmentID = ?, userID = ?, quantity = ?,purpose = ?, date_requested = ?, 
+    //                          date_returned = ?
+    //                     WHERE bookingID = ?";
+    //    _dbAccess.ExecuteNonQueryBooking(query, parameters);
+
+    //    return RedirectToAction("Index");
+    //  }
+
+    //  // Repopulate dropdowns in case of validation errors
+    //  ViewBag.Items = GetItems();
+    //  ViewBag.Statuses = GetBookingStatus();
+
+    //  if (role == "Superadmin" || role == "Admin")
+    //  {
+    //    ViewBag.Departments = GetDepartments();
+    //    ViewBag.Users = GetUsers();
+    //  }
+    //  else
+    //  {
+    //    ViewBag.Departments = GetDepartments()
+    //        .Where(d => d.Value == sessionDeptID)
+    //        .ToList();
+
+    //    ViewBag.Users = GetUsers()
+    //        .Where(u => u.Value == sessionUserID)
+    //        .ToList();
+    //  }
+
+    //  //return View(model);
+    //  return RedirectToAction("Index");
+    //}
 
     // GET: Booking/Delete/5
     public ActionResult Delete(int id)
@@ -381,7 +444,8 @@ namespace BookingAppV2.Controllers
       }
       // =================== END ADDED =================
 
-      return View(booking);
+      //return View("Index");
+      return RedirectToAction("Index");
     }
 
     // POST: Booking/Delete/5

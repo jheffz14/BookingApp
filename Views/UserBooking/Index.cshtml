@@ -16,7 +16,10 @@
 }
 
 <p>
-    @Html.ActionLink("Create New Booking", "Create", null, new { @class = "btn btn-success" })
+   @*  @Html.ActionLink("Create New Booking", "Create", null, new { @class = "btn btn-success" }) *@
+    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createBookingModal">
+        + Create New Booking
+    </button>
 </p>
 <table class="table table-bordered table-striped" id="bookingTable">
     <thead>
@@ -65,11 +68,31 @@
                             string status = row["status"].ToString();
                             string role = Context.Session.GetString("role") ?? "";
 
-                            // Users cannot edit approved bookings
                             if (role != "Users" || status != "Approved")
                             {
-                                @Html.ActionLink("Edit", "Edit", new { id = row["bookingID"] }, new { @class = "btn btn-primary btn-sm" })
-                                @Html.ActionLink("Delete", "Delete", new { id = row["bookingID"] }, new { @class = "btn btn-danger btn-sm" })
+                                <button class="btn btn-primary btn-sm"
+                                        onclick="openEditModal(
+                                    '@row["bookingID"]',
+                                    '@(row["date_requested"] != DBNull.Value ? ((DateTime)row["date_requested"]).ToString("yyyy-MM-ddTHH:mm") : "")',
+                                    '@row["status"]',
+                                    '@row["remarks"]'
+                                    )">
+                                    Edit
+                                </button>
+
+                                <button class="btn btn-danger btn-sm"
+                                        onclick="openDeleteModal(
+                                    '@row["bookingID"]',
+                                    '@row["item_name"]',
+                                    '@row["departmentName"]',
+                                    '@row["userID"]',
+                                    '@row["quantity"]',
+                                    '@row["purpose"]',
+                                    '@(row["date_requested"] != DBNull.Value ? ((DateTime)row["date_requested"]).ToString("MM-dd-yyyy hh:mm tt") : "")',
+                                    '@row["status"]'
+                                    )">
+                                    Delete
+                                </button>
                             }
                             else
                             {
@@ -91,6 +114,164 @@
         
     </tbody>
 </table>
+
+
+<!--Modals-->
+
+<!-- Create Booking Modal -->
+<div class="modal fade" id="createBookingModal" tabindex="-1" aria-labelledby="createBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createBookingModalLabel">Create New Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form asp-controller="UserBooking" asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+
+                    <!-- Item -->
+                    <div class="mb-3">
+                        <label class="form-label">Item</label>
+                        <select name="itemID" class="form-control" required>
+                            <option value="">-- Select Item --</option>
+                            @foreach (var item in (IEnumerable<SelectListItem>)ViewBag.Items)
+                            {
+                                <option value="@item.Value">@item.Text</option>
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Hidden fields -->
+                    <input type="hidden" name="departmentID" value="@Context.Session.GetString("DepartmentID")" />
+                    <input type="hidden" name="userID" value="@Context.Session.GetString("UserID")" />
+                    <input type="hidden" name="status" value="Pending" />
+
+                    <!-- Quantity -->
+                    <div class="mb-3">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" name="quantity" class="form-control" min="1" required />
+                    </div>
+
+                    <!-- Purpose -->
+                    <div class="mb-3">
+                        <label class="form-label">Purpose</label>
+                        <input type="text" name="purpose" class="form-control" required />
+                    </div>
+
+                    <!-- Date Requested -->
+                    <div class="mb-3">
+                        <label class="form-label">Date & Time Requested</label>
+                        <input type="datetime-local" name="date_requested" class="form-control" required />
+                    </div>
+
+                    <!-- Error message -->
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger">@TempData["Error"]</div>
+                    }
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Edit Booking Modal -->
+<div class="modal fade" id="editBookingModal" tabindex="-1" aria-labelledby="editBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editBookingModalLabel">Edit Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="editBookingForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="bookingid" id="edit_bookingid" />
+
+                    <!-- Date Requested -->
+                    <div class="mb-3">
+                        <label class="form-label">Date & Time Requested</label>
+                        <input type="datetime-local" name="date_requested" id="edit_date_requested" class="form-control" required />
+                    </div>
+
+                    <!-- Status -->
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select name="status" id="edit_status" class="form-control" required>
+                            <option value="Pending">Pending</option>
+                        </select>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="mb-3">
+                        <label class="form-label">Remarks</label>
+                        <input type="text" name="remarks" id="edit_remarks" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Booking Modal -->
+<div class="modal fade" id="deleteBookingModal" tabindex="-1" aria-labelledby="deleteBookingModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteBookingModalLabel">Delete Booking</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" id="deleteBookingForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="delete_bookingid" />
+                    <h5>Are you sure you want to delete this booking?</h5>
+                    <dl class="row mt-3">
+                        <dt class="col-sm-4">Item</dt>
+                        <dd class="col-sm-8" id="delete_item"></dd>
+                        <dt class="col-sm-4">Department</dt>
+                        <dd class="col-sm-8" id="delete_department"></dd>
+                        <dt class="col-sm-4">User</dt>
+                        <dd class="col-sm-8" id="delete_user"></dd>
+                        <dt class="col-sm-4">Quantity</dt>
+                        <dd class="col-sm-8" id="delete_quantity"></dd>
+                        <dt class="col-sm-4">Purpose</dt>
+                        <dd class="col-sm-8" id="delete_purpose"></dd>
+                        <dt class="col-sm-4">Date Requested</dt>
+                        <dd class="col-sm-8" id="delete_date"></dd>
+                        <dt class="col-sm-4">Status</dt>
+                        <dd class="col-sm-8" id="delete_status"></dd>
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
+<!--End Modals-->
+
+
+
+
+
 @section Scripts {
     <script src="~/Scripts/jquery-3.6.0.min.js"></script>
 
@@ -104,13 +285,13 @@
                                        b.status === 'Returned' ||
                                        b.status === 'Disapproved'));
 
-                let editButton = canEditDelete
-                    ? `<a class="btn btn-primary btn-sm" href="/UsersBooking/Edit/${b.bookingID}">Edit</a>`
-                    : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
+                       let editButton = canEditDelete
+            ? `<button class="btn btn-primary btn-sm" onclick="openEditModal('${b.bookingID}', '', '${b.status}', '${b.remarks ?? ''}')">Edit</button>`
+            : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
 
-                let deleteButton = canEditDelete
-                    ? `<a class="btn btn-danger btn-sm" href="/UsersBooking/Delete/${b.bookingID}">Delete</a>`
-                    : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
+        let deleteButton = canEditDelete
+            ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal('${b.bookingID}', '${b.item}', '${b.department}', '${b.user}', '${b.quantity}', '${b.purpose}', '${b.dateRequested}', '${b.status}')">Delete</button>`
+            : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
 
                 tbody += `
                     <tr>
@@ -207,5 +388,40 @@
                 success: renderBookings
             });
         }, 5000);
+
+
+        //for modals
+
+                function openEditModal(id, dateRequested, status, remarks) {
+            document.getElementById('edit_bookingid').value = id;
+            document.getElementById('edit_date_requested').value = dateRequested;
+            document.getElementById('edit_status').value = status;
+            document.getElementById('edit_remarks').value = remarks;
+
+            // Set form action dynamically
+            document.getElementById('editBookingForm').action = '/UserBooking/Edit/' + id;
+
+            var modal = new bootstrap.Modal(document.getElementById('editBookingModal'));
+            modal.show();
+        }
+
+        function openDeleteModal(id, item, department, user, quantity, purpose, date, status) {
+            document.getElementById('delete_bookingid').value = id;
+            document.getElementById('delete_item').innerText = item;
+            document.getElementById('delete_department').innerText = department;
+            document.getElementById('delete_user').innerText = user;
+            document.getElementById('delete_quantity').innerText = quantity;
+            document.getElementById('delete_purpose').innerText = purpose;
+            document.getElementById('delete_date').innerText = date;
+            document.getElementById('delete_status').innerText = status;
+
+            // Set form action dynamically
+            document.getElementById('deleteBookingForm').action = '/UserBooking/Delete/' + id;
+
+            var modal = new bootstrap.Modal(document.getElementById('deleteBookingModal'));
+            modal.show();
+        }
+
+
     </script>
 }

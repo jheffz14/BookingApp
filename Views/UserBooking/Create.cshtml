@@ -1,0 +1,115 @@
+@model BookingAppV2.Models.Booking
+@{
+    ViewBag.Title = "Create Booking";
+}
+<h2>Create Booking</h2>
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.itemID, "Item")
+        @Html.DropDownListFor(
+    m => m.itemID,
+    (IEnumerable<SelectListItem>)ViewBag.Items,
+    "-- Select Item --",
+    new { @class = "form-control", required = "required" }
+)
+    </div>
+
+    @*<div class="form-group">
+       @Html.DropDownListFor(
+    m => m.departmentID,
+    (IEnumerable<SelectListItem>)ViewBag.Departments,
+    "-- Select Department --",
+    new { @class = "form-control" }
+     )
+    </div>
+
+    <div class="form-group">
+       @Html.DropDownListFor(
+    m => m.userID,
+    (IEnumerable<SelectListItem>)ViewBag.Users,
+    "-- Select User --",
+    new { @class = "form-control", @value = ViewBag.CurrentUserID }
+)
+    </div>*@
+
+    <div class="form-group">
+        @*@Html.LabelFor(m => m.departmentID)
+    @Html.TextBox(
+        "DepartmentName",
+        ((IEnumerable<SelectListItem>)ViewBag.Departments)
+            .FirstOrDefault(d => d.Value == ViewBag.CurrentDepartmentID)?.Text,
+        new { @class = "form-control", @readonly = "readonly" })
+    @Html.HiddenFor(m => m.departmentID)*@
+        @Html.HiddenFor(m => m.departmentID)
+    </div>
+    <div class="form-group">
+        @*@Html.LabelFor(m => m.userID)
+    @Html.TextBox(
+        "UserName",
+        ((IEnumerable<SelectListItem>)ViewBag.Users)
+            .FirstOrDefault(u => u.Value == ViewBag.CurrentUserID)?.Text,
+        new { @class = "form-control", @readonly = "readonly" })
+    @Html.HiddenFor(m => m.userID)*@
+
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.quantity)
+        @Html.TextBoxFor(
+            m => m.quantity,
+            new { @class = "form-control", type = "number", min = "1", required = "required" }
+        )
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.purpose)
+        @Html.TextBoxFor(
+            m => m.purpose,
+            new { @class = "form-control", type = "text", required = "required" }
+        )
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.date_requested, "Date & Time Requested")
+        @Html.TextBoxFor(
+        m => m.date_requested,
+        "{0:yyyy-MM-ddTHH:mm}",
+        new { @class = "form-control", type = "datetime-local", required = "required" }
+    )
+    </div>
+    @*<div class="form-group"> ----------- for test
+        @Html.Label("Date Requested")
+        <input type="date" id="datePart" class="form-control" />
+    </div>
+
+    <div class="form-group">
+        @Html.Label("Time Requested")
+        <input type="time" id="timePart" class="form-control" />
+    </div>
+    @Html.HiddenFor(m => m.date_requested)*@
+    //-------------------------------------------for test
+
+    @*<div class="form-group">
+        @Html.LabelFor(m => m.status)
+        @Html.DropDownListFor(
+            m => m.status,
+            (IEnumerable<SelectListItem>)ViewBag.Statuses,
+            new { @class = "form-control" }
+        )
+    </div>*@
+
+    //<div class="form-group">
+    @*@Html.LabelFor(m => m.status)
+    @Html.TextBoxFor(m => m.status, new { @class = "form-control", @readonly = "readonly" })*@ 
+    //</div>
+    @Html.HiddenFor(m => m.status, new { Value = "Pending" })
+    <button type="submit" class="btn btn-primary">Submit</button>
+    <div>
+        @Html.ActionLink("Back to List", "Index")
+    </div>
+}
+
+
