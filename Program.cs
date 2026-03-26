@@ -11,9 +11,6 @@ builder.Services.AddHttpContextAccessor();
 
 
 
-// register the bound options instance so it can be injected directly
-builder.Services.AddSingleton(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ConnectionOptions>>().Value);
-
 // register dbAccess as a service (choose AddSingleton/AddScoped/AddTransient as appropriate)
 builder.Services.AddSingleton<dbAccess>();
 

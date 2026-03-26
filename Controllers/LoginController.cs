@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
-// removed: using System.Web.Mvc;
+
 
 namespace BookingApp.Controllers
 {
@@ -49,13 +49,13 @@ namespace BookingApp.Controllers
 
         // role-based redirect
         if (role == "Admin")
-          return RedirectToAction("Index", "Booking");
+          return RedirectToAction("Index", "Dashboards");
 
         if (role == "Superadmin")
-          return RedirectToAction("Index", "Department");
+          return RedirectToAction("Index", "Dashboards");
 
         if (role == "Users")
-          return RedirectToAction("Index", "UserBooking");
+          return RedirectToAction("Index", "Dashboards");
         // fallback
         return RedirectToAction("Index", "Home");
       }

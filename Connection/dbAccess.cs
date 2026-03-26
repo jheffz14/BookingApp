@@ -8,21 +8,15 @@ namespace BookingAppV2.Connection
 {
   public class dbAccess
   {
-              // removed static dependency on Connection_String and receive via DI
-    private readonly string _connectionStringBK;
 
-
-    public dbAccess(ConnectionOptions options)
-    {
-      _connectionStringBK = options.BookingApp ?? throw new ArgumentNullException(nameof(options.BookingApp));
-    }
+    private static readonly string connectionStringBK = Connection_String.connectionStringBooking;
 
     public DataTable ExecuteQueryBooking(string query, List<OleDbParameter>? parameters = null)
     {
       DataTable dt = new DataTable();
       try
       {
-        using (OleDbConnection conn = new OleDbConnection(_connectionStringBK))
+        using (OleDbConnection conn = new OleDbConnection(connectionStringBK))
         using (OleDbCommand cmd = new OleDbCommand(query, conn))
         {
           if (parameters != null && parameters.Count > 0)
@@ -48,7 +42,7 @@ namespace BookingAppV2.Connection
       int rowsAffected = 0;
       try
       {
-        using (OleDbConnection conn = new OleDbConnection(_connectionStringBK))
+        using (OleDbConnection conn = new OleDbConnection(connectionStringBK))
         using (OleDbCommand cmd = new OleDbCommand(query, conn))
         {
           if (parameters != null && parameters.Count > 0)
