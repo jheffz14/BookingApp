@@ -2,6 +2,15 @@ using BookingAppV2.Connection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddScoped<BookingAppV2.Services.UsersService>();
+builder.Services.AddScoped<BookingAppV2.Services.BookingService>();
+builder.Services.AddScoped<BookingAppV2.Services.StockService>();
+builder.Services.AddScoped<BookingAppV2.Services.ItemService>();
+builder.Services.AddScoped<BookingAppV2.Services.DepartmentService>();
+
+builder.Services.AddScoped<BookingAppV2.Helpers.GetRolesUsers>();
+builder.Services.AddScoped<BookingAppV2.Helpers.GetUserBookingStatus>();
+
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
 // Add services to the container.

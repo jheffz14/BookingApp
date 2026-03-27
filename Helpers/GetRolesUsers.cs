@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace BookingAppV2.Helpers
 {
-  public class GetRoles
+  public class GetRolesUsers
   {
-    public static List<SelectListItem> GetRolesUsers()
+    public static List<SelectListItem> GetRoles()
     {
       return new List<SelectListItem>
             {

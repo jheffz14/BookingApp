@@ -9,16 +9,40 @@ using System.Data;
 using System.Data.OleDb;
 using System.Linq;
 using Microsoft.AspNetCore.Http;
+using BookingAppV2.Services;
+using BookingAppV2.Helpers;
 
 namespace BookingAppV2.Controllers
 {
   public class UserBookingController : BaseController
   {
     private readonly dbAccess _dbAccess;
+    private readonly UsersService _UsersService;
+    private readonly BookingService _BookingService;
+    private readonly StockService _StockService;
+    private readonly ItemService _ItemService;
+    private readonly DepartmentService _DepartmentService;
+    private readonly GetRolesUsers _GetRolesUsers;
+    private readonly GetUserBookingStatus _GetUserBookingStatus;
 
-    public UserBookingController(dbAccess dbAccess)
+
+    public UserBookingController(dbAccess dbAccess,
+                                 UsersService usersService,
+                                 BookingService bookingService,
+                                 StockService stockService,
+                                 ItemService itemService,
+                                 DepartmentService departmentService,
+                                 GetRolesUsers getRoles,
+                                 GetUserBookingStatus getUserBookingStatus)
     {
       _dbAccess = dbAccess;
+      _UsersService = usersService;
+      _BookingService = bookingService;
+      _StockService = stockService;
+      _ItemService = itemService;
+      _DepartmentService = departmentService;
+      _GetRolesUsers = getRoles;
+      _GetUserBookingStatus = getUserBookingStatus;
     }
     public ActionResult Index()
     {
@@ -65,7 +89,7 @@ namespace BookingAppV2.Controllers
             INNER JOIN Department AS D ON B.departmentID = D.departmentID)
             ORDER BY B.bookingID DESC";
       }
-      ViewBag.Items = GetItems(); // ✅ ADD HERE before return
+      ViewBag.Items = _ItemService.GetItems(); // ✅ ADD HERE before return
       DataTable dt = _dbAccess.ExecuteQueryBooking(query, parameters);
       return View(dt);
     }
@@ -76,8 +100,8 @@ namespace BookingAppV2.Controllers
     public ActionResult Create()
     {
       // Populate Items and Booking Status dropdowns
-      ViewBag.Items = GetItems();
-      ViewBag.Statuses = GetBookingStatus();
+      ViewBag.Items = _ItemService.GetItems();
+      ViewBag.Statuses = _GetUserBookingStatus.GetBookingStatus();
       //ViewBag.Statuses = "Pending";
 
       string? role = HttpContext.Session.GetString("role");
@@ -87,13 +111,13 @@ namespace BookingAppV2.Controllers
 
       if (role == "Superadmin" || role == "Admin")
       {
-        ViewBag.Departments = GetDepartments();
+        ViewBag.Departments = _DepartmentService.GetDepartments();
         ViewBag.Users = GetUsers();
       }
       else
       {
         // NORMAL USER → single fixed values
-        ViewBag.Departments = GetDepartments()
+        ViewBag.Departments = _DepartmentService.GetDepartments()
             .Where(d => d.Value == sessionDeptId)
             .ToList();
 
@@ -115,25 +139,6 @@ namespace BookingAppV2.Controllers
       return View();
     }
 
-
-    // Safe DB query helpers
-    private string GetDepartmentName(string departmentID)
-    {
-      if (string.IsNullOrEmpty(departmentID)) return "Unknown";
-
-      string query = "SELECT departmentName FROM Department WHERE departmentID = ?";
-      var dt = _dbAccess.ExecuteQueryBooking(query, new List<OleDbParameter> { new OleDbParameter("?", departmentID) });
-      return dt.Rows.Count > 0 ? (dt.Rows[0]["departmentName"]?.ToString() ?? "Unknown") : "Unknown";
-    }
-
-    private string GetUserName(string userID)
-    {
-      if (string.IsNullOrEmpty(userID)) return "Unknown";
-
-      string query = "SELECT user_name FROM Users WHERE userID = ?";
-      var dt = _dbAccess.ExecuteQueryBooking(query, new List<OleDbParameter> { new OleDbParameter("?", userID) });
-      return dt.Rows.Count > 0 ? (dt.Rows[0]["user_name"]?.ToString() ?? "Unknown") : "Unknown";
-    }
 
 
     // GET: UserBooking/Create
@@ -192,11 +197,11 @@ namespace BookingAppV2.Controllers
       {
         model.userID = sessionUserID!;
         model.departmentID = sessionDeptID!;
-        model.status = GetBookingStatus().First().Value; // "Pending"
+        model.status = _GetUserBookingStatus.GetBookingStatus().First().Value; // "Pending"
       }
 
       // ===================== STOCK CHECK ADDED HERE =====================
-      int available = GetAvailableStock(model.itemID);
+      int available = _StockService.GetAvailableStock(model.itemID);
 
       if (model.quantity > available)
       {
@@ -236,7 +241,8 @@ namespace BookingAppV2.Controllers
     // GET: Booking/Edit/5
     public ActionResult Edit(int id)
     {
-      var booking = GetBookingById(id);
+     
+      var booking = _BookingService.GetBookingById(id);
       if (booking == null) return NotFound();
 
       // ===================== ADDED =====================
@@ -254,8 +260,8 @@ namespace BookingAppV2.Controllers
 
 
       // Populate Items and Booking Status dropdowns
-      ViewBag.Items = GetItems();
-      ViewBag.Statuses = GetBookingStatus();
+      ViewBag.Items = _ItemService.GetItems();
+      ViewBag.Statuses = _GetUserBookingStatus.GetBookingStatus();
 
       string? role = HttpContext.Session.GetString("role");
       string? sessionDeptId = HttpContext.Session.GetString("Departmentid");
@@ -264,13 +270,13 @@ namespace BookingAppV2.Controllers
       if (role == "Superadmin" || role == "Admin")
       {
         // Admin sees all departments and users
-        ViewBag.Departments = GetDepartments();
+        ViewBag.Departments = _DepartmentService.GetDepartments();
         ViewBag.Users = GetUsers();
       }
       else
       {
         // Normal user → restrict dropdowns to their own department & themselves
-        ViewBag.Departments = GetDepartments()
+        ViewBag.Departments = _DepartmentService.GetDepartments()
             .Where(d => d.Value == sessionDeptId)
             .ToList();
 
@@ -295,7 +301,7 @@ namespace BookingAppV2.Controllers
       string? role = HttpContext.Session.GetString("role");
       string? sessionUserID = HttpContext.Session.GetString("userID");
       string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
-      var existingBooking = GetBookingById(model.bookingid);
+      var existingBooking = _BookingService.GetBookingById(model.bookingid);
 
       if (existingBooking == null)
       {
@@ -348,87 +354,12 @@ namespace BookingAppV2.Controllers
       _dbAccess.ExecuteNonQueryBooking(query, parameters);
       return RedirectToAction("Index");
     }
-    //[HttpPost]
-    //[ValidateAntiForgeryToken]
-    //public ActionResult Edit(Booking model)
-    //{
-    //  string? role = HttpContext.Session.GetString("role");
-    //  string? sessionUserID = HttpContext.Session.GetString("userID");
-    //  string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
-    //  var existingBooking = GetBookingById(model.bookingid);
-
-    //  // ===================== ADDED =====================
-    //  // Final server-side protection (even if user bypasses UI or uses Postman)
-    //  if (role == "Users" &&
-    //      (existingBooking.status == "Approved" ||
-    //       existingBooking.status == "Returned" ||
-    //       existingBooking.status == "Disapproved"))
-    //  {
-    //    TempData["Error"] = "You cannot edit this booking because it is already finalized.";
-    //    return RedirectToAction("Index");
-    //  }
-    //  // =================== END ADDED ===================
-
-
-    //  // 🔒 Force values for NORMAL USERS
-    //  if (role == "Users")
-    //  {
-    //    model.userID = sessionUserID!;
-    //    model.departmentID = sessionDeptID!;
-    //    model.status = GetBookingStatus().First().Value;
-    //  }
-    //  if (ModelState.IsValid)
-    //  {
-    //    var parameters = new List<OleDbParameter>
-    //    {
-    //        new OleDbParameter("?", model.itemID),
-    //        new OleDbParameter("?", model.departmentID ?? ""),  // if short text
-    //        new OleDbParameter("?", model.userID),
-    //        new OleDbParameter("?", model.quantity),
-    //        new OleDbParameter("?", string.IsNullOrEmpty(model.purpose) ? "" : model.purpose),
-    //        new OleDbParameter("?", model.date_requested.HasValue ? (object)model.date_requested.Value : DBNull.Value),
-    //        new OleDbParameter("?", model.date_returned.HasValue ? (object)model.date_returned.Value : DBNull.Value),
-    //        //new OleDbParameter("?", model.status ?? ""),
-    //        new OleDbParameter("?", model.bookingid)
-    //    };
-
-    //    string query = @"UPDATE BookingTrans 
-    //                     SET itemID = ?, departmentID = ?, userID = ?, quantity = ?,purpose = ?, date_requested = ?, 
-    //                          date_returned = ?
-    //                     WHERE bookingID = ?";
-    //    _dbAccess.ExecuteNonQueryBooking(query, parameters);
-
-    //    return RedirectToAction("Index");
-    //  }
-
-    //  // Repopulate dropdowns in case of validation errors
-    //  ViewBag.Items = GetItems();
-    //  ViewBag.Statuses = GetBookingStatus();
-
-    //  if (role == "Superadmin" || role == "Admin")
-    //  {
-    //    ViewBag.Departments = GetDepartments();
-    //    ViewBag.Users = GetUsers();
-    //  }
-    //  else
-    //  {
-    //    ViewBag.Departments = GetDepartments()
-    //        .Where(d => d.Value == sessionDeptID)
-    //        .ToList();
-
-    //    ViewBag.Users = GetUsers()
-    //        .Where(u => u.Value == sessionUserID)
-    //        .ToList();
-    //  }
-
-    //  //return View(model);
-    //  return RedirectToAction("Index");
-    //}
+    
 
     // GET: Booking/Delete/5
     public ActionResult Delete(int id)
     {
-      var booking = GetBookingById(id);
+      var booking = _BookingService.GetBookingById(id);
       if (booking == null) return NotFound();
 
       // ===================== ADDED =====================
@@ -455,7 +386,7 @@ namespace BookingAppV2.Controllers
     {
 
       // Users cannot delete approved bookings
-      var existingBooking = GetBookingById(id);
+      var existingBooking = _BookingService.GetBookingById(id);
       if (existingBooking == null)
       {
         TempData["Error"] = "Booking not found.";
@@ -480,103 +411,8 @@ namespace BookingAppV2.Controllers
       return RedirectToAction("Index");
     }
 
-    private Users? GetUserById(string id)
-    {
-      string query = @"
-        SELECT U.*, D.DepartmentName
-        FROM Users U
-        LEFT JOIN Department D ON U.DepartmentID = D.DepartmentID
-        WHERE U.userID = ?";
 
-      var parameters = new List<OleDbParameter>
-    {
-        new OleDbParameter("?", id)
-    };
-
-      DataTable dt = _dbAccess.ExecuteQueryBooking(query, parameters);
-      if (dt.Rows.Count == 0) return null;
-
-      var row = dt.Rows[0];
-      return new Users
-      {
-        userID = row["userID"]?.ToString() ?? "",
-        pass_word = row["pass_word"]?.ToString() ?? "",
-        role = row["role"]?.ToString() ?? "",
-        DepartmentID = row["DepartmentID"]?.ToString() ?? "",
-        DepartmentName = row["DepartmentName"]?.ToString() ?? ""
-      };
-    }
-
-
-
-    // Helper: get roles for dropdown
-    private List<SelectListItem> GetRoles()
-    {
-      return new List<SelectListItem>
-            {
-                new SelectListItem { Text = "Superadmin", Value = "Superadmin" },
-                new SelectListItem { Text = "Admin", Value = "Admin" },
-                new SelectListItem { Text = "Users", Value = "Users" }
-            };
-    }
-
-
-    private Booking? GetBookingById(int id)
-    {
-      string query = "SELECT * FROM BookingTrans WHERE bookingID = ?";
-      var parameters = new List<OleDbParameter> { new OleDbParameter("?", id) };
-      DataTable dt = _dbAccess.ExecuteQueryBooking(query, parameters);
-
-      if (dt.Rows.Count == 0) return null;
-
-      var row = dt.Rows[0];
-      return new Booking
-      {
-        bookingid = Convert.ToInt32(row["bookingID"]),
-        itemID = row["itemID"]?.ToString() ?? "",          // <-- string now
-        departmentID = row["departmentID"]?.ToString() ?? "", // <-- string now
-        userID = row["userID"]?.ToString() ?? "",         // <-- string now
-        quantity = Convert.ToInt32(row["quantity"]),
-        purpose = row["purpose"]?.ToString() ?? "",
-        date_requested = row["date_requested"] != DBNull.Value ? (DateTime?)row["date_requested"] : null,
-        //date_borrowed = row["date_borrowed"] != DBNull.Value ? (DateTime?)row["date_borrowed"] : null,       
-        status = row["status"]?.ToString() ?? ""
-      };
-    }
-
-    // Helper: dropdown lists
-    private List<SelectListItem> GetItems()
-    {
-      string query = "SELECT itemID, item_name FROM Items";
-      DataTable dt = _dbAccess.ExecuteQueryBooking(query, null);
-      var list = new List<SelectListItem>();
-      foreach (DataRow row in dt.Rows)
-      {
-        list.Add(new SelectListItem
-        {
-          Text = row["item_name"]?.ToString() ?? "",
-          Value = row["itemID"]?.ToString() ?? ""
-        });
-      }
-      return list;
-    }
-
-    private List<SelectListItem> GetDepartments()
-    {
-      string query = "SELECT departmentID, departmentName FROM Department ";
-      DataTable dt = _dbAccess.ExecuteQueryBooking(query, null);
-      var list = new List<SelectListItem>();
-      foreach (DataRow row in dt.Rows)
-      {
-        list.Add(new SelectListItem
-        {
-          Text = row["departmentName"]?.ToString() ?? "",
-          Value = row["departmentID"]?.ToString() ?? ""
-        });
-      }
-      return list;
-    }
-
+  
     private List<SelectListItem> GetUsers()
     {
       string query = "SELECT userID, userID FROM Users"; // Use userID or username
@@ -593,13 +429,7 @@ namespace BookingAppV2.Controllers
       return list;
     }
 
-    private List<SelectListItem> GetBookingStatus()
-    {
-      return new List<SelectListItem>
-    {
-        new SelectListItem { Text = "Pending", Value = "Pending" }
-    };
-    }
+
 
     //for refresh rows of booking
     [HttpGet]
@@ -693,41 +523,7 @@ namespace BookingAppV2.Controllers
     }
 
 
-    // ===================== NEW METHOD =====================
-    // Calculates the remaining available stock for an item
-    private int GetAvailableStock(string itemID)
-    {
-      // 1. Get total stock
-      string stockQuery = "SELECT total_stock FROM Items WHERE itemID = ?";
-      var stockDt = _dbAccess.ExecuteQueryBooking(stockQuery,
-          new List<OleDbParameter> { new OleDbParameter("?", itemID) });
-
-      if (stockDt.Rows.Count == 0)
-        return 0;
-
-      int totalStock = Convert.ToInt32(stockDt.Rows[0]["total_stock"]);
-
-      // 2. Borrowed + Pending
-      string borrowedQuery = @"
-        SELECT SUM(quantity) AS borrowed
-        FROM BookingTrans
-        WHERE itemID = ?
-        AND status IN ('Approved', 'Pending')";
-
-      var borrowDt = _dbAccess.ExecuteQueryBooking(borrowedQuery,
-          new List<OleDbParameter> { new OleDbParameter("?", itemID) });
-
-      int borrowedQty = 0;
-      if (borrowDt.Rows.Count > 0 && borrowDt.Rows[0]["borrowed"] != DBNull.Value)
-        borrowedQty = Convert.ToInt32(borrowDt.Rows[0]["borrowed"]);
-
-      return totalStock - borrowedQty;
-    }
-
-    // ================= END NEW METHOD =====================
-
-
-
+    
 
 
     //protected override void OnActionExecuting(ActionExecutingContext filterContext)
