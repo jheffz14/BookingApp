@@ -8,12 +8,44 @@
 </script>
 <h2>Bookings</h2>
 
-@if (TempData["Error"] != null)
+@* @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger">
         @TempData["Error"]
     </div>
+} *@
+@{
+    var successMsg = TempData["Success"]?.ToString();
+    var warningMsg = TempData["Warning"]?.ToString();
+    var errorMsg = TempData["Error"]?.ToString();
+    TempData.Remove("Success");
+    TempData.Remove("Warning");
+    TempData.Remove("Error");
 }
+
+@if (successMsg != null)
+{
+    <div id="tempAlert" class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bx bx-check-circle me-1"></i> @successMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (warningMsg != null)
+{
+    <div id="tempAlert" class="alert alert-warning alert-dismissible fade show m-3" role="alert">
+        <i class="bx bx-error me-1"></i> @warningMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (errorMsg != null)
+{
+    <div id="tempAlert" class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+        <i class="bx bx-x-circle me-1"></i> @errorMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+
 
 <p>
    @*  @Html.ActionLink("Create New Booking", "Create", null, new { @class = "btn btn-success" }) *@
@@ -421,6 +453,19 @@
             var modal = new bootstrap.Modal(document.getElementById('deleteBookingModal'));
             modal.show();
         }
+
+             // =====================
+        // Auto dismiss alerts
+        // =====================
+        window.addEventListener('DOMContentLoaded', function () {
+            const alert = document.getElementById('tempAlert');
+            if (alert) {
+                setTimeout(function () {
+                    alert.classList.remove('show');
+                    setTimeout(function () { alert.remove(); }, 500);
+                }, 4000);
+            }
+        });
 
 
     </script>
