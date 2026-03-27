@@ -48,6 +48,23 @@ namespace BookingAppV2.Services
       };
     }
 
+    public List<SelectListItem> GetUsers()
+    {
+      string query = "SELECT userID, userID FROM Users"; // Use userID or username
+      DataTable dt = _dbAccess.ExecuteQueryBooking(query, null);
+      var list = new List<SelectListItem>();
+      foreach (DataRow row in dt.Rows)
+      {
+        list.Add(new SelectListItem
+        {
+          Text = row["userID"]?.ToString() ?? "",
+          Value = row["userID"]?.ToString() ?? ""
+        });
+      }
+      return list;
+    }
+
+
 
   }
 }

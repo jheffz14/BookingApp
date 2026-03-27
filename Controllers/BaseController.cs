@@ -11,7 +11,7 @@ public class BaseController : Controller
     {
       filterContext.Result = new RedirectToRouteResult(
           new RouteValueDictionary(
-              new { controller = "accessdenied", action = "Index" }
+              new { controller = "Login", action = "Index" }
           )
       );
       return;
@@ -20,10 +20,10 @@ public class BaseController : Controller
     base.OnActionExecuting(filterContext);
   }
 
-  protected bool IsAdmin()
+  protected bool IsUsers()
   {
-    var role = HttpContext.Session.GetString("Role");
+    var role = HttpContext.Session.GetString("role");
     //return role == "Superadmin" || role == "Admin";
-    return role == "Admin";
+    return role == "Users";
   }
 }

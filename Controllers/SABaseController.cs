@@ -8,7 +8,7 @@ namespace BookingAppV2.Controllers
     public override void OnActionExecuting(ActionExecutingContext filterContext)
     {
       // 🔐 Not logged in
-      if (HttpContext.Session.GetString("UserID") == null)
+      if (HttpContext.Session.GetString("userID") == null)
       {
         filterContext.Result = RedirectToAction("Index", "AccessDenied");
         return;

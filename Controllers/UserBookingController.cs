@@ -1,16 +1,17 @@
 using BookingAppV2.Connection;
-using BookingAppV2.Models;
 using BookingAppV2.Controllers;
+using BookingAppV2.Helpers;
+using BookingAppV2.Models;
+using BookingAppV2.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.Linq;
-using Microsoft.AspNetCore.Http;
-using BookingAppV2.Services;
-using BookingAppV2.Helpers;
 
 namespace BookingAppV2.Controllers
 {
@@ -43,6 +44,18 @@ namespace BookingAppV2.Controllers
       _DepartmentService = departmentService;
       _GetRolesUsers = getRoles;
       _GetUserBookingStatus = getUserBookingStatus;
+    }
+
+    public override void OnActionExecuting(ActionExecutingContext filterContext)
+    {
+      base.OnActionExecuting(filterContext);
+      if (filterContext.Result != null) return;
+
+      if (!IsUsers())
+      {
+        filterContext.Result = RedirectToAction("Index", "AccessDenied");
+        return;
+      }
     }
     public ActionResult Index()
     {
@@ -112,7 +125,7 @@ namespace BookingAppV2.Controllers
       if (role == "Superadmin" || role == "Admin")
       {
         ViewBag.Departments = _DepartmentService.GetDepartments();
-        ViewBag.Users = GetUsers();
+        ViewBag.Users = _UsersService.GetUsers();
       }
       else
       {
@@ -121,7 +134,7 @@ namespace BookingAppV2.Controllers
             .Where(d => d.Value == sessionDeptId)
             .ToList();
 
-        ViewBag.Users = GetUsers()
+        ViewBag.Users = _UsersService.GetUsers()
             .Where(u => u.Value == sessionUserId)
             .ToList();
       }
@@ -271,7 +284,7 @@ namespace BookingAppV2.Controllers
       {
         // Admin sees all departments and users
         ViewBag.Departments = _DepartmentService.GetDepartments();
-        ViewBag.Users = GetUsers();
+        ViewBag.Users = _UsersService.GetUsers();
       }
       else
       {
@@ -280,7 +293,7 @@ namespace BookingAppV2.Controllers
             .Where(d => d.Value == sessionDeptId)
             .ToList();
 
-        ViewBag.Users = GetUsers()
+        ViewBag.Users = _UsersService.GetUsers()
             .Where(u => u.Value == sessionUserId)
             .ToList();
       }
@@ -412,24 +425,6 @@ namespace BookingAppV2.Controllers
     }
 
 
-  
-    private List<SelectListItem> GetUsers()
-    {
-      string query = "SELECT userID, userID FROM Users"; // Use userID or username
-      DataTable dt = _dbAccess.ExecuteQueryBooking(query, null);
-      var list = new List<SelectListItem>();
-      foreach (DataRow row in dt.Rows)
-      {
-        list.Add(new SelectListItem
-        {
-          Text = row["userID"]?.ToString() ?? "",
-          Value = row["userID"]?.ToString() ?? ""
-        });
-      }
-      return list;
-    }
-
-
 
     //for refresh rows of booking
     [HttpGet]
@@ -522,24 +517,7 @@ namespace BookingAppV2.Controllers
       return Json(list);
     }
 
-
     
-
-
-    //protected override void OnActionExecuting(ActionExecutingContext filterContext)
-    //{
-    //    if (!IsAdmin())
-    //    {
-    //        filterContext.Result = new RedirectToRouteResult(
-    //            new RouteValueDictionary(
-    //                new { controller = "Login", action = "Index" }
-    //            )
-    //        );
-    //        return;
-    //    }
-
-    //    base.OnActionExecuting(filterContext);
-    //}
 
   }
 }
