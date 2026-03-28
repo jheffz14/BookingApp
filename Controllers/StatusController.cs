@@ -259,7 +259,8 @@ namespace BookingAppV2.Controllers
             oldStatus: oldStatus,
             newStatus: model.status,
             quantity: existingBooking.quantity,
-            purpose: model.purpose,
+                //purpose: model.purpose,
+                purpose: existingBooking.purpose ?? "",  // ✅ use existing, not model
             date_requested: existingBooking.date_requested,
             date_returned: returnedDate,
             remarks: model.remarks

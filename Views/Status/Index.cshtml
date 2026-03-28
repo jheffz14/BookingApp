@@ -110,10 +110,27 @@
                             else
                             {
                                 // ✅ Core - no Html.ActionLink
-                                <a href="/Status/Edit/@row["bookingID"]"
+                                @* <a href="/Status/Edit/@row["bookingID"]"
                                    class="btn btn-primary btn-sm">Edit</a>
                                 <a href="/Status/Delete/@row["bookingID"]"
-                                   class="btn btn-danger btn-sm">Delete</a>
+                                   class="btn btn-danger btn-sm">Delete</a> *@
+                                <button class="btn btn-primary btn-sm"
+                                        onclick="openEditModal(
+                                    '@row["bookingID"]',
+                                    '@(row["date_returned"] != DBNull.Value ? ((DateTime)row["date_returned"]).ToString("yyyy-MM-ddTHH:mm") : "")',
+                                    '@row["status"]',
+                                    '@row["remarks"]')">
+                                                   Edit
+                                </button>
+
+                                <button class="btn btn-danger btn-sm"
+                                        onclick="openDeleteModal(
+                                                 '@row["bookingID"]',
+                                                 '@row["item_name"]',
+                                                 '@row["departmentName"]',
+                                                 '@row["status"]')">
+                                                  Delete
+                                </button>
                             }
                         </td>
                     }
@@ -353,12 +370,20 @@
                 if (s !== currentStatus) fetchBookings(s, startDate, endDate);
             });
 
-            $("form").submit(function(e) {
-                e.preventDefault();
-                startDate = $(this).find("input[name='startDate']").val();
-                endDate = $(this).find("input[name='endDate']").val();
-                fetchBookings(currentStatus, startDate, endDate);
-            });
+            // $("form").submit(function(e) {
+            //     e.preventDefault();
+            //     startDate = $(this).find("input[name='startDate']").val();
+            //     endDate = $(this).find("input[name='endDate']").val();
+            //     fetchBookings(currentStatus, startDate, endDate);
+            // });
+                    // ✅ Only intercept the filter form
+        $(".filter-form").submit(function(e) {
+            e.preventDefault();
+            startDate = $(this).find("input[name='startDate']").val();
+            endDate = $(this).find("input[name='endDate']").val();
+            fetchBookings(currentStatus, startDate, endDate);
+        });
+
 
             setInterval(() => fetchBookings(currentStatus, startDate, endDate), 5000);
             setInterval(() => statusList.forEach(s => {
@@ -387,14 +412,40 @@
                 // =====================
         // Edit Modal
         // =====================
-        function openEditModal(id, dateReturned, status, remarks) {
+        // function openEditModal(id, dateReturned, status, remarks) {
+        //     document.getElementById('edit_bookingid').value = id;
+        //     document.getElementById('edit_date_returned').value = dateReturned;
+        //     document.getElementById('edit_status').value = status;
+        //     document.getElementById('edit_remarks').value = remarks;
+
+        //     // Auto-fill date returned if Returned status and empty
+        //     if (status === 'Returned' && !dateReturned) {
+        //         var now = new Date();
+        //         var formatted = now.getFullYear() + '-' +
+        //             String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        //             String(now.getDate()).padStart(2, '0') + 'T' +
+        //             String(now.getHours()).padStart(2, '0') + ':' +
+        //             String(now.getMinutes()).padStart(2, '0');
+        //         document.getElementById('edit_date_returned').value = formatted;
+        //     }
+
+        //     document.getElementById('editBookingForm').action = '/Status/Edit/' + id;
+        //     new bootstrap.Modal(document.getElementById('editBookingModal')).show();
+        // }
+                function openEditModal(id, dateReturned, status, remarks) {
             document.getElementById('edit_bookingid').value = id;
             document.getElementById('edit_date_returned').value = dateReturned;
-            document.getElementById('edit_status').value = status;
             document.getElementById('edit_remarks').value = remarks;
 
-            // Auto-fill date returned if Returned status and empty
-            if (status === 'Returned' && !dateReturned) {
+            // ✅ Filter dropdown options based on current status
+            var statusSelect = document.getElementById('edit_status');
+            statusSelect.innerHTML = ''; // clear existing options
+
+            if (status === 'Approved') {
+                // Approved → can only set to Returned
+                statusSelect.innerHTML = '<option value="Returned">Returned</option>';
+
+                // ✅ Auto-fill date returned with NOW
                 var now = new Date();
                 var formatted = now.getFullYear() + '-' +
                     String(now.getMonth() + 1).padStart(2, '0') + '-' +
@@ -402,7 +453,27 @@
                     String(now.getHours()).padStart(2, '0') + ':' +
                     String(now.getMinutes()).padStart(2, '0');
                 document.getElementById('edit_date_returned').value = formatted;
+
+            } else if (status === 'Disapproved') {
+                // Disapproved → can only stay Disapproved or go back to Pending
+                statusSelect.innerHTML = `
+                    <option value="Disapproved">Disapproved</option>
+                    <option value="Pending">Pending</option>
+                `;
+                document.getElementById('edit_date_returned').value = dateReturned;
+
+            } else {
+                // Pending or other → show all options
+                statusSelect.innerHTML = `
+                    <option value="Approved">Approved</option>
+                    <option value="Disapproved">Disapproved</option>
+                    <option value="Returned">Returned</option>
+                `;
+                document.getElementById('edit_date_returned').value = dateReturned;
             }
+
+            // Set current status as selected
+            statusSelect.value = status === 'Approved' ? 'Returned' : status;
 
             document.getElementById('editBookingForm').action = '/Status/Edit/' + id;
             new bootstrap.Modal(document.getElementById('editBookingModal')).show();
