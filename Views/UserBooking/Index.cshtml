@@ -49,9 +49,21 @@
 
 <p>
    @*  @Html.ActionLink("Create New Booking", "Create", null, new { @class = "btn btn-success" }) *@
-    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createBookingModal">
-        + Create New Booking
-    </button>
+    @{
+        var userType = Context.Session.GetString("role");
+        var userName = Context.Session.GetString("userID");
+
+        @if (userName != null)
+        {
+            @if (userType == "Users")
+            {
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createBookingModal">
+                    + Create New Booking
+                </button>
+            }
+        }
+
+    }
 </p>
 <table class="table table-bordered table-striped" id="bookingTable">
     <thead>

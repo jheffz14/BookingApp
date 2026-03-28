@@ -2,6 +2,7 @@ using BookingAppV2.Connection;
 using BookingAppV2.Models;
 using BookingAppV2.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,18 @@ namespace BookingAppV2.Controllers
       _ItemService = itemService;
       _DepartmentService = departmentService;
       _UsersService = usersService;
+    }
+
+    public override void OnActionExecuting(ActionExecutingContext filterContext)
+    {
+      base.OnActionExecuting(filterContext);
+      if (filterContext.Result != null) return;
+
+      if (!IsUsers() && !IsAdmin())
+      {
+        filterContext.Result = RedirectToAction("Index", "AccessDenied");
+        return;
+      }
     }
 
     public ActionResult Index(string status = "Approved",
@@ -268,7 +281,10 @@ namespace BookingAppV2.Controllers
       _dbAccess.ExecuteNonQueryBooking(query, parameters); // ✅ instance
 
       return RedirectToAction("Index");
+
     }
+
+
 
     private void LogStatusChange(int bookingId, string itemID, string departmentID,
                                   string oldStatus, string newStatus, int quantity,
