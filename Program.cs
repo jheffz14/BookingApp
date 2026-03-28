@@ -8,6 +8,7 @@ builder.Services.AddScoped<BookingAppV2.Services.StockService>();
 builder.Services.AddScoped<BookingAppV2.Services.ItemService>();
 builder.Services.AddScoped<BookingAppV2.Services.DepartmentService>();
 
+
 builder.Services.AddScoped<BookingAppV2.Helpers.GetRolesUsers>();
 builder.Services.AddScoped<BookingAppV2.Helpers.GetUserBookingStatus>();
 

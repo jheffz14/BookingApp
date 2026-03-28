@@ -45,5 +45,39 @@ namespace BookingAppV2.Services
         status = row["status"]?.ToString() ?? ""
       };
     }
+
+    public void LogStatusChange(int bookingId, string itemID, string departmentID,
+                             string oldStatus, string newStatus, int quantity,
+                             string purpose, DateTime? date_requested,
+                             DateTime? date_returned, string remarks,
+                             string changedBy)
+    {
+      string query = @"INSERT INTO BookingStatusLog
+        (bookingID, itemID, departmentID, oldStatus, newStatus, quantity,
+         purpose, date_requested, date_returned, changedBy, changedDate, remarks)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+      var parameters = new List<OleDbParameter>
+    {
+        new OleDbParameter("?", OleDbType.Integer) { Value = bookingId },
+        new OleDbParameter("?", OleDbType.VarChar) { Value = itemID ?? "" },
+        new OleDbParameter("?", OleDbType.VarChar) { Value = departmentID ?? "" },
+        new OleDbParameter("?", OleDbType.VarChar) { Value = oldStatus ?? "" },
+        new OleDbParameter("?", OleDbType.VarChar) { Value = newStatus ?? "" },
+        new OleDbParameter("?", OleDbType.Integer) { Value = quantity },
+        new OleDbParameter("?", OleDbType.VarChar) { Value = purpose ?? "" },
+        new OleDbParameter("?", date_requested.HasValue
+            ? (object)date_requested.Value : DBNull.Value),
+        new OleDbParameter("?", date_returned.HasValue
+            ? (object)date_returned.Value : DBNull.Value),
+        new OleDbParameter("?", OleDbType.VarChar) { Value = changedBy },
+        new OleDbParameter("?", OleDbType.Date) { Value = DateTime.Now },
+        new OleDbParameter("?", OleDbType.VarChar) { Value = remarks ?? "" }
+    };
+
+      _dbAccess.ExecuteNonQueryBooking(query, parameters);
+    }
+
+
   }
 }

@@ -51,7 +51,7 @@ namespace BookingAppV2.Controllers
       base.OnActionExecuting(filterContext);
       if (filterContext.Result != null) return;
 
-      if (!IsUsers())
+      if (!IsUsers() && !IsAdmin())
       {
         filterContext.Result = RedirectToAction("Index", "AccessDenied");
         return;
@@ -100,6 +100,7 @@ namespace BookingAppV2.Controllers
             FROM ((BookingTrans AS B
             INNER JOIN Items AS I ON B.itemID = I.itemID)
             INNER JOIN Department AS D ON B.departmentID = D.departmentID)
+            WHERE B.status = 'Pending'
             ORDER BY B.bookingID DESC";
       }
       ViewBag.Items = _ItemService.GetItems(); // ✅ ADD HERE before return
@@ -114,11 +115,9 @@ namespace BookingAppV2.Controllers
     {
       // Populate Items and Booking Status dropdowns
       ViewBag.Items = _ItemService.GetItems();
-      ViewBag.Statuses = _GetUserBookingStatus.GetBookingStatus();
-      //ViewBag.Statuses = "Pending";
-
       string? role = HttpContext.Session.GetString("role");
-
+      ViewBag.Statuses = _GetUserBookingStatus.GetBookingStatusList(role ?? "");
+      //ViewBag.Statuses = "Pending";
       string? sessionDeptId = HttpContext.Session.GetString("Departmentid");
       string? sessionUserId = HttpContext.Session.GetString("userID");
 
@@ -187,7 +186,7 @@ namespace BookingAppV2.Controllers
                                });
 
       // Optionally, you can prefill the current logged-in user
-      ViewBag.CurrentUserID = HttpContext.Session.GetString("UserID");
+      ViewBag.CurrentUserID = HttpContext.Session.GetString("userID");
       return View();
     }
 
@@ -210,7 +209,7 @@ namespace BookingAppV2.Controllers
       {
         model.userID = sessionUserID!;
         model.departmentID = sessionDeptID!;
-        model.status = _GetUserBookingStatus.GetBookingStatus().First().Value; // "Pending"
+        model.status = "Pending";
       }
 
       // ===================== STOCK CHECK ADDED HERE =====================
@@ -274,9 +273,8 @@ namespace BookingAppV2.Controllers
 
       // Populate Items and Booking Status dropdowns
       ViewBag.Items = _ItemService.GetItems();
-      ViewBag.Statuses = _GetUserBookingStatus.GetBookingStatus();
-
       string? role = HttpContext.Session.GetString("role");
+      ViewBag.Statuses = _GetUserBookingStatus.GetBookingStatusList(role ?? "");
       string? sessionDeptId = HttpContext.Session.GetString("Departmentid");
       string? sessionUserId = HttpContext.Session.GetString("userID");
 
@@ -314,14 +312,15 @@ namespace BookingAppV2.Controllers
       string? role = HttpContext.Session.GetString("role");
       string? sessionUserID = HttpContext.Session.GetString("userID");
       string? sessionDeptID = HttpContext.Session.GetString("Departmentid");
-      var existingBooking = _BookingService.GetBookingById(model.bookingid);
 
+      var existingBooking = _BookingService.GetBookingById(model.bookingid);
       if (existingBooking == null)
       {
         TempData["Error"] = "Booking not found.";
         return RedirectToAction("Index");
       }
 
+      // Block Users from editing finalized bookings
       if (role == "Users" &&
           (existingBooking.status == "Approved" ||
            existingBooking.status == "Returned" ||
@@ -331,6 +330,7 @@ namespace BookingAppV2.Controllers
         return RedirectToAction("Index");
       }
 
+      // Force values for normal Users
       if (role == "Users")
       {
         model.userID = sessionUserID!;
@@ -338,36 +338,63 @@ namespace BookingAppV2.Controllers
         model.status = "Pending";
       }
 
-      // ✅ REMOVED ModelState.IsValid check
-      // WHY: Your modal only sends bookingid, date_requested, status, remarks.
-      // Fields like itemID, quantity, purpose are NOT in the modal form.
-      // ModelState.IsValid checks ALL fields of the Booking model —
-      // since those fields are missing/null, it returns FALSE and
-      // skips the update entirely, so nothing gets saved.
+      // ✅ ADMIN: handle date_returned and status change logging
+      if (role == "Admin" || role == "Superadmin")
+      {
+        // Auto-set date_returned when status is Returned
+        DateTime? returnedDate = existingBooking.date_returned;
+        if (model.status == "Returned" && !returnedDate.HasValue)
+        {
+          returnedDate = DateTime.Now;
+          model.date_returned = returnedDate;
+        }
 
-      // ✅ CHANGED: Only update the 3 fields the modal actually sends
-      // WHY: Your old query tried to update itemID, departmentID, quantity, etc.
-      // but those values are null/empty because the modal doesnt have those inputs.
-      // Updating with null/empty would corrupt your existing data.
+        // Log status change
+        bool isStatusChanged = existingBooking.status != model.status;
+        bool isReturnedNow = model.status == "Returned";
+
+        if (isStatusChanged || isReturnedNow)
+        {
+          string oldStatus = existingBooking.status;
+          if (isReturnedNow && oldStatus == "Pending")
+            oldStatus = "Pending (Direct Returned)";
+
+          _BookingService.LogStatusChange(
+              bookingId: model.bookingid,
+              itemID: existingBooking.itemID,
+              departmentID: existingBooking.departmentID,
+              oldStatus: oldStatus,
+              newStatus: model.status,
+              quantity: existingBooking.quantity,
+              purpose: model.purpose ?? existingBooking.purpose,
+              date_requested: existingBooking.date_requested,
+              date_returned: returnedDate,
+              remarks: model.remarks,
+              changedBy: sessionUserID ?? ""
+          );
+        }
+      }
+
+      // Update DB — same query works for both roles
       string query = @"UPDATE BookingTrans 
-                     SET date_requested = ?, status = ?, remarks = ?
-                     WHERE bookingID = ?";
+                 SET date_requested = ?, date_returned = ?, status = ?, remarks = ?
+                 WHERE bookingID = ?";
 
-      // ✅ CHANGED: Parameters now match the new query (only 4 instead of 8)
       var parameters = new List<OleDbParameter>
-    {
-        new OleDbParameter("?", model.date_requested.HasValue
-            ? (object)model.date_requested.Value
-            : DBNull.Value),
-        new OleDbParameter("?", model.status ?? existingBooking.status),
-        new OleDbParameter("?", model.remarks ?? ""),
-        new OleDbParameter("?", model.bookingid)
-    };
+{
+    new OleDbParameter("?", model.date_requested.HasValue
+        ? (object)model.date_requested.Value : DBNull.Value),
+    new OleDbParameter("?", model.date_returned.HasValue
+        ? (object)model.date_returned.Value : DBNull.Value),
+    new OleDbParameter("?", model.status ?? existingBooking.status),
+    new OleDbParameter("?", model.remarks ?? ""),
+    new OleDbParameter("?", model.bookingid)
+};
 
       _dbAccess.ExecuteNonQueryBooking(query, parameters);
       return RedirectToAction("Index");
     }
-    
+
 
     // GET: Booking/Delete/5
     public ActionResult Delete(int id)
@@ -486,6 +513,7 @@ namespace BookingAppV2.Controllers
             INNER JOIN Items i ON b.itemID = i.itemID)
             INNER JOIN Department d ON b.departmentid = d.departmentid)
             INNER JOIN Users u ON b.userID = u.userID
+            WHERE b.status = 'Pending'  
             ORDER BY b.bookingId DESC";
       }
 
@@ -506,6 +534,9 @@ namespace BookingAppV2.Controllers
           dateRequested = row["date_requested"] != DBNull.Value
                 ? ((DateTime)row["date_requested"]).ToString("MM-dd-yyyy hh:mm tt")
                 : "",
+          dateRequestedRaw = row["date_requested"] != DBNull.Value  // ✅ ADD THIS
+          ? ((DateTime)row["date_requested"]).ToString("yyyy-MM-ddTHH:mm")
+          : "",
           dateReturned = row["date_returned"] != DBNull.Value
                 ? ((DateTime)row["date_returned"]).ToString("MM-dd-yyyy")
                 : "",

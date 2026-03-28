@@ -26,4 +26,11 @@ public class BaseController : Controller
     //return role == "Superadmin" || role == "Admin";
     return role == "Users";
   }
+
+  protected bool IsAdmin()
+  {
+    var role = HttpContext.Session.GetString("role");
+    return role == "Admin";
+  }
+
 }

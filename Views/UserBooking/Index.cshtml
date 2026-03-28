@@ -234,12 +234,31 @@
                     </div>
 
                     <!-- Status -->
+                    <!-- Status dropdown in Edit Modal -->
                     <div class="mb-3">
                         <label class="form-label">Status</label>
                         <select name="status" id="edit_status" class="form-control" required>
-                            <option value="Pending">Pending</option>
+                            @if (Context.Session.GetString("role") == "Admin" ||
+                                         Context.Session.GetString("role") == "Superadmin")
+                            {
+                                <option value="Pending">Pending</option>
+                               <option value="Approved">Approved</option>
+                                <option value="Disapproved">Disapproved</option>
+                                <option value="Returned">Returned</option>
+                            }
+                            else
+                            {
+                                <option value="Pending">Pending</option>
+                            }
                         </select>
                     </div>
+                    <!-- Edit Booking Modal body - add this after Status -->
+                    <div class="mb-3" id="dateReturnedGroup" style="display:none;">
+                        <label class="form-label">Date Returned</label>
+                        <input type="datetime-local" name="date_returned"
+                               id="edit_date_returned" class="form-control" />
+                    </div>
+
 
                     <!-- Remarks -->
                     <div class="mb-3">
@@ -309,110 +328,64 @@
 
     <script>
 
+        // =====================
+        // Render bookings table
+        // =====================
         function renderBookings(data) {
             let tbody = '';
-            data.forEach(function(b) {
-                let canEditDelete = !(currentRole === 'Users' &&
-                                      (b.status === 'Approved' ||
-                                       b.status === 'Returned' ||
-                                       b.status === 'Disapproved'));
 
-                       let editButton = canEditDelete
-            ? `<button class="btn btn-primary btn-sm" onclick="openEditModal('${b.bookingID}', '', '${b.status}', '${b.remarks ?? ''}')">Edit</button>`
-            : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
+            if (!data || data.length === 0) {
+                tbody = '<tr><td colspan="11" class="text-center">No bookings found.</td></tr>';
+            } else {
+                data.forEach(function(b) {
+                    let canEditDelete = !(currentRole === 'Users' &&
+                                          (b.status === 'Approved' ||
+                                           b.status === 'Returned' ||
+                                           b.status === 'Disapproved'));
 
-        let deleteButton = canEditDelete
-            ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal('${b.bookingID}', '${b.item}', '${b.department}', '${b.user}', '${b.quantity}', '${b.purpose}', '${b.dateRequested}', '${b.status}')">Delete</button>`
-            : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
+                    let safeRemarks = (b.remarks ?? '').replace(/'/g, "\\'");
+                    let safePurpose = (b.purpose ?? '').replace(/'/g, "\\'");
+                    let safeItem = (b.item ?? '').replace(/'/g, "\\'");
+                    let safeDept = (b.department ?? '').replace(/'/g, "\\'");
 
-                tbody += `
-                    <tr>
-                        <td>${b.bookingID}</td>
-                        <td>${b.item}</td>
-                        <td>${b.department}</td>
-                        <td>${b.user}</td>
-                        <td>${b.quantity}</td>
-                        <td>${b.purpose}</td>
-                        <td>${b.dateRequested}</td>
-                        <td>${b.dateReturned}</td>
-                        <td>${b.status}</td>
-                        <td>${b.remarks}</td>
-                        <td>${editButton} ${deleteButton}</td>
-                    </tr>
-                `;
-            });
-            $('#bookingTable tbody').html(tbody);
+                    let editButton = canEditDelete
+                        ? `<button class="btn btn-primary btn-sm" onclick="openEditModal('${b.bookingID}', '${b.dateRequestedRaw ?? ''}', '${b.status}', '${safeRemarks}')">Edit</button>`
+                        : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
+
+                    let deleteButton = canEditDelete
+                        ? `<button class="btn btn-danger btn-sm" onclick="openDeleteModal('${b.bookingID}', '${safeItem}', '${safeDept}', '${b.user}', '${b.quantity}', '${safePurpose}', '${b.dateRequested}', '${b.status}')">Delete</button>`
+                        : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
+
+                    tbody += `
+                        <tr>
+                            <td>${b.bookingID}</td>
+                            <td>${b.item}</td>
+                            <td>${b.department}</td>
+                            <td>${b.user}</td>
+                            <td>${b.quantity}</td>
+                            <td>${b.purpose}</td>
+                            <td>${b.dateRequested}</td>
+                            <td>${b.dateReturned}</td>
+                            <td>${b.status}</td>
+                            <td>${b.remarks}</td>
+                            <td>${editButton} ${deleteButton}</td>
+                        </tr>
+                    `;
+                });
             }
 
-            //function renderBookings(data) {
+            $('#bookingTable tbody').html(tbody);
+        }
 
-            //    let existingIds = new Set();
-
-            //    data.forEach(function (b) {
-
-            //        existingIds.add(String(b.bookingID));
-
-            //        let canEditDelete = !(currentRole === 'Users' &&
-            //            (b.status === 'Approved' ||
-            //             b.status === 'Returned' ||
-            //             b.status === 'Disapproved'));
-
-            //        let editButton = canEditDelete
-            //            ? `<a class="btn btn-primary btn-sm" href="/UserBooking/Edit/${b.bookingID}">Edit</a>`
-            //            : `<button class="btn btn-secondary btn-sm" disabled>Edit</button>`;
-
-            //        let deleteButton = canEditDelete
-            //            ? `<a class="btn btn-danger btn-sm" href="/UserBooking/Delete/${b.bookingID}">Delete</a>`
-            //            : `<button class="btn btn-secondary btn-sm" disabled>Delete</button>`;
-
-            //        let rowHtml = `
-            //        <tr data-booking-id="${b.bookingID}">
-            //            <td>${b.bookingID}</td>
-            //            <td>${b.item}</td>
-            //            <td>${b.department}</td>
-            //            <td>${b.user}</td>
-            //            <td>${b.quantity}</td>
-            //            <td>${b.purpose}</td>
-            //            <td>${b.dateRequested}</td>
-            //            <td>${b.dateReturned}</td>
-            //            <td class="status-cell">${b.status}</td>
-            //            <td>${b.remarks}</td>
-            //            <td>${editButton} ${deleteButton}</td>
-            //        </tr>
-            //    `;
-
-            //        let existingRow = $(`#bookingTable tr[data-booking-id="${b.bookingID}"]`);
-
-            //        if (existingRow.length === 0) {
-            //            // 🆕 NEW ROW
-            //            $('#bookingTable tbody').prepend(rowHtml);
-            //        } else {
-            //            // 🔄 UPDATE ONLY IF STATUS CHANGED
-            //            let currentStatus = existingRow.find('.status-cell').text();
-            //            if (currentStatus !== b.status) {
-            //                existingRow.replaceWith(rowHtml);
-            //            }
-            //        }
-            //    });
-
-            //    // ❌ REMOVE DELETED BOOKINGS
-            //    $('#bookingTable tbody tr').each(function () {
-            //        let id = $(this).data('booking-id');
-            //        if (!existingIds.has(String(id))) {
-            //            $(this).remove();
-            //        }
-            //    });
-            //}
-
-
-        // Initial load
+        // =====================
+        // AJAX load
+        // =====================
         $.ajax({
             url: '@Url.Action("GetLatestBookings", "UserBooking")',
             type: 'GET',
             success: renderBookings
         });
 
-        // Refresh every 5 seconds
         setInterval(function () {
             $.ajax({
                 url: '@Url.Action("GetLatestBookings", "UserBooking")',
@@ -421,22 +394,51 @@
             });
         }, 5000);
 
-
-        //for modals
-
-                function openEditModal(id, dateRequested, status, remarks) {
+        // =====================
+        // Edit Modal
+        // =====================
+        function openEditModal(id, dateRequested, status, remarks) {
             document.getElementById('edit_bookingid').value = id;
             document.getElementById('edit_date_requested').value = dateRequested;
             document.getElementById('edit_status').value = status;
             document.getElementById('edit_remarks').value = remarks;
 
-            // Set form action dynamically
+            toggleDateReturned(status);
+
             document.getElementById('editBookingForm').action = '/UserBooking/Edit/' + id;
 
             var modal = new bootstrap.Modal(document.getElementById('editBookingModal'));
             modal.show();
         }
 
+        document.getElementById('edit_status').addEventListener('change', function() {
+            toggleDateReturned(this.value);
+        });
+
+        function toggleDateReturned(status) {
+            var group = document.getElementById('dateReturnedGroup');
+            var input = document.getElementById('edit_date_returned');
+
+            if (status === 'Returned') {
+                group.style.display = 'block';
+                if (!input.value) {
+                    var now = new Date();
+                    var formatted = now.getFullYear() + '-' +
+                        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(now.getDate()).padStart(2, '0') + 'T' +
+                        String(now.getHours()).padStart(2, '0') + ':' +
+                        String(now.getMinutes()).padStart(2, '0');
+                    input.value = formatted;
+                }
+            } else {
+                group.style.display = 'none';
+                input.value = '';
+            }
+        }
+
+        // =====================
+        // Delete Modal
+        // =====================
         function openDeleteModal(id, item, department, user, quantity, purpose, date, status) {
             document.getElementById('delete_bookingid').value = id;
             document.getElementById('delete_item').innerText = item;
@@ -447,14 +449,13 @@
             document.getElementById('delete_date').innerText = date;
             document.getElementById('delete_status').innerText = status;
 
-            // Set form action dynamically
             document.getElementById('deleteBookingForm').action = '/UserBooking/Delete/' + id;
 
             var modal = new bootstrap.Modal(document.getElementById('deleteBookingModal'));
             modal.show();
         }
 
-             // =====================
+        // =====================
         // Auto dismiss alerts
         // =====================
         window.addEventListener('DOMContentLoaded', function () {
@@ -466,7 +467,6 @@
                 }, 4000);
             }
         });
-
 
     </script>
 }
