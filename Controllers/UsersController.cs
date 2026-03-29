@@ -26,7 +26,7 @@ namespace BookingAppV2.Controllers
     {
       base.OnActionExecuting(filterContext);
       if (filterContext.Result != null) return;
-      if (!IsAdmin())
+      if (!IsAdmin() && !IsSuperAdmin())
       {
         filterContext.Result = RedirectToAction("Index", "AccessDenied");
         return;
