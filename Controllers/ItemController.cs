@@ -38,19 +38,33 @@ namespace BookingAppV2.Controllers
       }
     }
 
-    public ActionResult Index(int page = 1)
+    public ActionResult Index(int page = 1, string search = "")
     {
       int pageSize = 10;
 
-      // ✅ Get ALL items, paginate in memory
-      string query = "SELECT * FROM Items ORDER BY itemID ASC";
-      DataTable allData = _dbAccess.ExecuteQueryBooking(query, null);
+      // ✅ Search filter
+      string query;
+      List<OleDbParameter>? parameters = null;
+
+      if (!string.IsNullOrEmpty(search))
+      {
+        query = "SELECT * FROM Items WHERE item_name LIKE ? ORDER BY itemID ASC";
+        parameters = new List<OleDbParameter>
+        {
+            new OleDbParameter("?", "%" + search + "%")
+        };
+      }
+      else
+      {
+        query = "SELECT * FROM Items ORDER BY itemID ASC";
+      }
+
+      DataTable allData = _dbAccess.ExecuteQueryBooking(query, parameters);
 
       int totalRows = allData.Rows.Count;
       int totalPages = (int)Math.Ceiling((double)totalRows / pageSize);
 
-      // ✅ Slice the rows for current page
-      DataTable pagedData = allData.Clone(); // same structure, no rows
+      DataTable pagedData = allData.Clone();
       int start = (page - 1) * pageSize;
       int end = Math.Min(start + pageSize, totalRows);
 
@@ -61,6 +75,7 @@ namespace BookingAppV2.Controllers
 
       ViewBag.CurrentPage = page;
       ViewBag.TotalPages = totalPages;
+      ViewBag.Search = search; // ✅ keep search value in box
 
       return View(pagedData);
     }

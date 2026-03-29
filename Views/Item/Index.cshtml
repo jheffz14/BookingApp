@@ -32,6 +32,21 @@
             data-bs-toggle="modal" data-bs-target="#createItemModal">
         + Add New Item
     </button>
+
+    <!-- Search Bar -->
+    <form method="get" class="mb-3 d-flex gap-2" style="max-width: 400px;">
+        <input type="text"
+               name="search"
+               value="@ViewBag.Search"
+               class="form-control"
+               placeholder="Search item name..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+        {
+            <a href="@Url.Action("Index")" class="btn btn-secondary">Clear</a>
+        }
+    </form>
+
 </p>
 
 <table class="table table-bordered table-striped">
@@ -82,7 +97,8 @@
             @if (ViewBag.CurrentPage > 1)
             {
                 <li class="page-item">
-                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1 })">
+                    <a class="page-link"
+                           href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search })">
                         Previous
                     </a>
                 </li>
@@ -90,13 +106,17 @@
             @for (int i = 1; i <= ViewBag.TotalPages; i++)
             {
                 <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { page = i })">@i</a>
+                    <a class="page-link"
+                           href="@Url.Action("Index", new { page = i, search = ViewBag.Search })">
+                        @i
+                    </a>
                 </li>
             }
             @if (ViewBag.CurrentPage < ViewBag.TotalPages)
             {
                 <li class="page-item">
-                    <a class="page-link" href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1 })">
+                    <a class="page-link"
+                           href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search })">
                         Next
                     </a>
                 </li>
