@@ -1,0 +1,254 @@
+@model System.Data.DataTable
+@{
+    ViewBag.Title = "Department List";
+}
+
+@{
+    var successMsg = TempData["Success"]?.ToString();
+    var errorMsg = TempData["Error"]?.ToString();
+    TempData.Remove("Success");
+    TempData.Remove("Error");
+}
+
+@if (successMsg != null)
+{
+    <div id="tempAlert" class="alert alert-success alert-dismissible fade show m-3" role="alert">
+        <i class="bx bx-check-circle me-1"></i> @successMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+@if (errorMsg != null)
+{
+    <div id="tempAlert" class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+        <i class="bx bx-x-circle me-1"></i> @errorMsg
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<h2>Department List</h2>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <button type="button" class="btn btn-success"
+            data-bs-toggle="modal" data-bs-target="#createDeptModal">
+        + Add New Department
+    </button>
+
+    <!-- Search -->
+    <form method="get" class="d-flex gap-2" style="max-width: 400px;">
+        <input type="text" name="search" value="@ViewBag.Search"
+               class="form-control" placeholder="Search department..." />
+        <button type="submit" class="btn btn-primary">Search</button>
+        @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+        {
+            <a href="@Url.Action("Index")" class="btn btn-secondary">Clear</a>
+        }
+    </form>
+</div>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Department ID</th>
+            <th>Department Name</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Rows.Count > 0)
+        {
+            foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["departmentid"]</td>
+                    <td>@row["departmentName"]</td>
+                    <td>
+                        <button class="btn btn-primary btn-sm"
+                                onclick="openEditModal(
+                            '@row["departmentid"]',
+                            '@row["departmentName"]')">
+                            Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm"
+                                onclick="openDeleteModal(
+                            '@row["departmentid"]',
+                            '@row["departmentName"]')">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="3" class="text-center">No departments found.</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                           href="@Url.Action("Index", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search })">
+                        Previous
+                    </a>
+                </li>
+            }
+            @for (int i = 1; i <= ViewBag.TotalPages; i++)
+            {
+                <li class="page-item @(i == ViewBag.CurrentPage ? "active" : "")">
+                    <a class="page-link"
+                           href="@Url.Action("Index", new { page = i, search = ViewBag.Search })">
+                        @i
+                    </a>
+                </li>
+            }
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <li class="page-item">
+                    <a class="page-link"
+                           href="@Url.Action("Index", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search })">
+                        Next
+                    </a>
+                </li>
+            }
+        </ul>
+    </nav>
+}
+
+<!-- Create Modal -->
+<div class="modal fade" id="createDeptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" asp-controller="Department" asp-action="Create">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Department ID</label>
+                        <input type="text" name="departmentid"
+                               class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department Name</label>
+                        <input type="text" name="departmentName"
+                               class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editDeptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editDeptForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="departmentid" id="edit_deptID" />
+                    <div class="mb-3">
+                        <label class="form-label">Department ID</label>
+                        <input type="text" id="edit_deptID_display"
+                               class="form-control" readonly />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Department Name</label>
+                        <input type="text" name="departmentName"
+                               id="edit_deptName" class="form-control" required />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteDeptModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Department</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="deleteDeptForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="delete_deptID" />
+                    <p>
+                        Are you sure you want to delete department
+                        <strong id="delete_deptName"></strong>?
+                    </p>
+                    <p class="text-danger">
+                        <small>Departments with existing users or bookings cannot be deleted.</small>
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // =====================
+        // Auto dismiss alert
+        // =====================
+        window.addEventListener('DOMContentLoaded', function () {
+            const alert = document.getElementById('tempAlert');
+            if (alert) {
+                setTimeout(function () {
+                    alert.classList.remove('show');
+                    setTimeout(function () { alert.remove(); }, 500);
+                }, 5000);
+            }
+        });
+
+        // =====================
+        // Edit Modal
+        // =====================
+        function openEditModal(id, name) {
+            document.getElementById('edit_deptID').value = id;
+            document.getElementById('edit_deptID_display').value = id;
+            document.getElementById('edit_deptName').value = name;
+            document.getElementById('editDeptForm').action = '/Department/Edit';
+            new bootstrap.Modal(document.getElementById('editDeptModal')).show();
+        }
+
+        // =====================
+        // Delete Modal
+        // =====================
+        function openDeleteModal(id, name) {
+            document.getElementById('delete_deptID').value = id;
+            document.getElementById('delete_deptName').innerText = name;
+            document.getElementById('deleteDeptForm').action = '/Department/Delete/' + id;
+            new bootstrap.Modal(document.getElementById('deleteDeptModal')).show();
+        }
+    </script>
+}
