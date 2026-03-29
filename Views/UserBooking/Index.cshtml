@@ -253,7 +253,7 @@
                             @if (Context.Session.GetString("role") == "Admin" ||
                                          Context.Session.GetString("role") == "Superadmin")
                             {
-                                <option value="Pending">Pending</option>
+                               @*  <option value="Pending">Pending</option> *@     
                                <option value="Approved">Approved</option>
                                 <option value="Disapproved">Disapproved</option>
                                 <option value="Returned">Returned</option>
@@ -414,7 +414,6 @@
             document.getElementById('edit_date_requested').value = dateRequested;
             document.getElementById('edit_status').value = status;
             document.getElementById('edit_remarks').value = remarks;
-
             toggleDateReturned(status);
 
             document.getElementById('editBookingForm').action = '/UserBooking/Edit/' + id;

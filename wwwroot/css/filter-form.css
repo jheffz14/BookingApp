@@ -1,0 +1,89 @@
+/* Content/filter-form.css */
+
+/* Filter form styling */
+.filter-form {
+  width: 600px;
+}
+
+.filter-container {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 15px;
+  padding: 8px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+  margin-bottom: 15px;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.filter-label {
+  margin: 0;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+  color: #495057;
+  min-width: 70px;
+  text-align: right;
+}
+
+.filter-group input[type="date"] {
+  width: 150px;
+  min-width: 150px;
+}
+
+.filter-btn {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  margin-left: -10px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .filter-container {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .filter-group {
+    flex: 1 1 100%;
+  }
+
+    .filter-group input[type="date"] {
+      width: 100%;
+      min-width: unset;
+    }
+
+  .filter-label {
+    min-width: 65px;
+  }
+
+  .filter-btn {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .filter-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-label {
+    text-align: left;
+    min-width: unset;
+  }
+}
