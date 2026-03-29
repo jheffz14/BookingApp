@@ -68,7 +68,8 @@
             var adminMenuItems = new List<(string Controller, string Label, string Icon)>
                 {
                 ("UserBooking", "Booking Viewer", "bx-receipt"),
-                ("Status",     "Status List",        "bx-bar-chart-alt-2"), 
+                ("Status",     "Status List",        "bx-bar-chart-alt-2"),
+                ("Item",     "Item List",        "bx-purchase-tag"), 
                 };
 
             var superAdminMenuItems = new List<(string Controller, string Label, string Icon)>
@@ -84,7 +85,8 @@
 
         <li class='menu-item@(currentPage.StartsWith("/Booking") ||
                               currentPage.StartsWith("/UserBooking") ||
-                                 currentPage.StartsWith("/Status") ||   
+                              currentPage.StartsWith("/Status") ||
+                              currentPage.StartsWith("/Item") ||   
                               currentPage.StartsWith("/Users") ? " active open" : "")'>
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base bx bx-wrench"></i>
