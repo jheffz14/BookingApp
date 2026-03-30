@@ -69,6 +69,15 @@
 <div class="row">
 
     @* ===== ITEM AVAILABILITY ===== *@
+    @{
+        var userType = Context.Session.GetString("role");
+        var userName = Context.Session.GetString("userID");
+        @if (userName != null)
+        {
+            @if (userType == "Admin" || userType == "Superadmin")
+            {
+ 
+
     <div class="col-lg-5 mb-4">
         <div class="card h-100">
             <div class="card-header">
@@ -125,9 +134,21 @@
         </div>
     </div>
 
+                  
+            }
+        }
+
+    }
+    <!--end item availability-->
+
+
     @* ===== BOOKING SCHEDULE ===== *@
-    <div class="col-lg-7 mb-4">
-        <div class="card h-100">
+
+   
+   
+       @*  <div class="col-lg-7 mb-4" style="width:100%;"> *@
+    <div class="@(role == "Users" ? "col-lg-7 mb-4" : "col-lg-7 mb-4")" @(role == "Users" ? "style=width:100%;" : "")>
+        <div class="card h-100" > 
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
                     <i class="bx bx-calendar me-1"></i>
@@ -141,6 +162,7 @@
                         <thead class="table-light" style="position:sticky;top:0;">
                             <tr>
                                 <th>Item</th>
+                                <th>User</th>
                                 <th>Department</th>
                                 <th>Qty</th>
                                 <th>Date Requested</th>
@@ -158,6 +180,7 @@
                                                        : "secondary";
                                     <tr>
                                         <td>@row["item_name"]</td>
+                                        <td>@row["userID"]</td>
                                         <td>@row["departmentName"]</td>
                                         <td>@row["quantity"]</td>
                                         <td>
@@ -184,8 +207,9 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>      
 </div>
+        
 @section Scripts {
     <script>
         var currentRole = '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(role))';
@@ -232,6 +256,7 @@
                 scheduleRows += `
                     <tr>
                         <td>${escapeHtml(b.itemName)}</td>
+                          <td>${escapeHtml(b.userID)}</td>
                         <td>${escapeHtml(b.department)}</td>
                         <td>${b.quantity}</td>
                         <td>${b.dateRequested}</td>

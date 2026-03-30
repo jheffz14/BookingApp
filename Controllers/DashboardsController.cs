@@ -173,8 +173,22 @@ namespace BookingAppV2.Controllers
     [HttpGet]
     public JsonResult GetDashboardData()
     {
+      // Check if user is logged in
+      string? userID = HttpContext.Session.GetString("userID");
+      if (string.IsNullOrEmpty(userID))
+      {
+        return Json(new { error = "Unauthorized" },
+                   System.Text.Json.JsonSerializerOptions.Web);
+      }
       string? role = HttpContext.Session.GetString("role");
       string? deptID = HttpContext.Session.GetString("Departmentid");
+
+      // Validate role is allowed
+      if (role != "Admin" && role != "Superadmin")
+      {
+        return Json(new { error = "Access denied" },
+                   System.Text.Json.JsonSerializerOptions.Web);
+      }
 
       // Item availability
       string itemQuery = @"
@@ -212,29 +226,39 @@ namespace BookingAppV2.Controllers
       if (role == "Users" && !string.IsNullOrEmpty(deptID))
       {
         scheduleQuery = @"
-            SELECT i.item_name, d.departmentName, b.quantity,
-                   b.date_requested, b.status
-            FROM ((BookingTrans b
-            INNER JOIN Items i ON b.itemID = i.itemID)
-            INNER JOIN Department d ON b.departmentID = d.departmentID)
+            SELECT i.item_name,
+                   u.userID,
+                   d.departmentName,
+                   b.quantity,
+                   b.date_requested,
+                   b.status
+          FROM (((BookingTrans b 
+                 INNER JOIN Items i ON b.itemID = i.itemID)
+                 INNER JOIN Department d ON b.departmentID = d.departmentID)
+                 INNER JOIN Users u ON b.userID = u.userID)
             WHERE b.status IN ('Pending','Approved')
             AND b.departmentID = ?
             ORDER BY b.date_requested ASC";
         scheduleParams = new List<OleDbParameter>
         {
-            new OleDbParameter("?", deptID)
+            new OleDbParameter(" ? ", deptID)
         };
       }
       else
       {
         scheduleQuery = @"
-            SELECT i.item_name, d.departmentName, b.quantity,
-                   b.date_requested, b.status
-            FROM ((BookingTrans b
-            INNER JOIN Items i ON b.itemID = i.itemID)
-            INNER JOIN Department d ON b.departmentID = d.departmentID)
-            WHERE b.status IN ('Pending','Approved')
-            ORDER BY b.date_requested ASC";
+          SELECT i.item_name,
+       u.userID,
+       d.departmentName,
+       b.quantity,
+       b.date_requested,
+       b.status
+FROM (((BookingTrans b 
+       INNER JOIN Items i ON b.itemID = i.itemID)
+       INNER JOIN Department d ON b.departmentID = d.departmentID)
+       INNER JOIN Users u ON b.userID = u.userID)
+WHERE b.status IN ('Pending','Approved')
+ORDER BY b.date_requested ASC";
       }
 
       DataTable scheduleDt = _dbAccess.ExecuteQueryBooking(scheduleQuery, scheduleParams);
@@ -245,6 +269,7 @@ namespace BookingAppV2.Controllers
         schedule.Add(new
         {
           itemName = row["item_name"].ToString(),
+          userID = row["userID"].ToString(),
           department = row["departmentName"].ToString(),
           quantity = Convert.ToInt32(row["quantity"]),
           dateRequested = row["date_requested"] != DBNull.Value
