@@ -183,12 +183,12 @@ namespace BookingAppV2.Controllers
       string? role = HttpContext.Session.GetString("role");
       string? deptID = HttpContext.Session.GetString("Departmentid");
 
-      // Validate role is allowed
-      if (role != "Admin" && role != "Superadmin")
-      {
-        return Json(new { error = "Access denied" },
-                   System.Text.Json.JsonSerializerOptions.Web);
-      }
+      //// Validate role is allowed
+      //if (role != "Admin" && role != "Superadmin")
+      //{
+      //  return Json(new { error = "Access denied" },
+      //             System.Text.Json.JsonSerializerOptions.Web);
+      //}
 
       // Item availability
       string itemQuery = @"

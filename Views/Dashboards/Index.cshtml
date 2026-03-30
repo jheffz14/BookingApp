@@ -218,67 +218,75 @@
         var role = currentRole.replace(/^"|"$/g, '');
 
         function renderDashboard(data) {
-            // ===== ITEM AVAILABILITY =====
-            let itemRows = '';
-            data.items.forEach(function(item) {
-                let badgeClass = item.available === 0 ? 'danger'
-                               : item.available <= 2 ? 'warning'
-                               : 'success';
-                let availText = item.available === 0 ? 'None' : item.available;
+              // ✅ Guard against missing data
+        if (!data || data.error) {
+            console.log('Dashboard data error:', data?.error);
+            return;
+        }
+                     // ===== ITEM AVAILABILITY =====
+            let itemAvailBody = document.getElementById('itemAvailabilityBody');
+            if (itemAvailBody && data.items) {
+                let itemRows = '';
+                data.items.forEach(function(item) {
+                    let badgeClass = item.available === 0 ? 'danger'
+                                   : item.available <= 2 ? 'warning'
+                                   : 'success';
+                    let availText = item.available === 0 ? 'None' : item.available;
 
-                let adminCols = '';
-                if (role === 'Admin' || role === 'Superadmin') {
-                    adminCols = `<td class="text-center">${item.total}</td>
-                                 <td class="text-center">${item.borrowed}</td>`;
-                }
+                    let adminCols = '';
+                    if (role === 'Admin' || role === 'Superadmin') {
+                        adminCols = `<td class="text-center">${item.total}</td>
+                                     <td class="text-center">${item.borrowed}</td>`;
+                    }
 
-                itemRows += `
-                    <tr>
-                        <td>${escapeHtml(item.itemName)}</td>
-                        ${adminCols}
-                        <td class="text-center">
-                            <span class="badge bg-${badgeClass}">${availText}</span>
-                        </td>
-                    </tr>`;
-            });
+                    itemRows += `
+                        <tr>
+                            <td>${escapeHtml(item.itemName)}</td>
+                            ${adminCols}
+                            <td class="text-center">
+                                <span class="badge bg-${badgeClass}">${availText}</span>
+                            </td>
+                        </tr>`;
+                });
 
-            if (itemRows === '') {
-                itemRows = '<tr><td colspan="4" class="text-center text-muted py-3">No items found.</td></tr>';
+                itemAvailBody.innerHTML = itemRows ||
+                    '<tr><td colspan="4" class="text-center text-muted py-3">No items found.</td></tr>';
             }
-            document.getElementById('itemAvailabilityBody').innerHTML = itemRows;
 
             // ===== BOOKING SCHEDULE =====
-            let scheduleRows = '';
-            data.schedule.forEach(function(b) {
-                let statusClass = b.status === 'Approved' ? 'success'
-                                : b.status === 'Pending' ? 'warning'
-                                : 'secondary';
-                scheduleRows += `
-                    <tr>
-                        <td>${escapeHtml(b.itemName)}</td>
-                          <td>${escapeHtml(b.userID)}</td>
-                        <td>${escapeHtml(b.department)}</td>
-                        <td>${b.quantity}</td>
-                        <td>${b.dateRequested}</td>
-                        <td><span class="badge bg-${statusClass}">${escapeHtml(b.status)}</span></td>
-                    </tr>`;
-            });
+            let scheduleBody = document.getElementById('bookingScheduleBody');
+            if (scheduleBody && data.schedule) {
+                let scheduleRows = '';
+                data.schedule.forEach(function(b) {
+                    let statusClass = b.status === 'Approved' ? 'success'
+                                    : b.status === 'Pending' ? 'warning'
+                                    : 'secondary';
+                    scheduleRows += `
+                        <tr>
+                            <td>${escapeHtml(b.itemName)}</td>
+                            <td>${escapeHtml(b.userID)}</td>
+                            <td>${escapeHtml(b.department)}</td>
+                            <td>${b.quantity}</td>
+                            <td>${b.dateRequested}</td>
+                            <td><span class="badge bg-${statusClass}">${escapeHtml(b.status)}</span></td>
+                        </tr>`;
+                });
 
-            if (scheduleRows === '') {
-                scheduleRows = '<tr><td colspan="5" class="text-center text-muted py-3">No active bookings.</td></tr>';
+                scheduleBody.innerHTML = scheduleRows ||
+                    '<tr><td colspan="6" class="text-center text-muted py-3">No active bookings.</td></tr>';
             }
-            document.getElementById('bookingScheduleBody').innerHTML = scheduleRows;
 
             // ===== SUMMARY COUNTS (Admin only) =====
-            // ✅ FIX: Update summary cards using data from the API response
-            if (role === 'Admin' || role === 'Superadmin') {
-                if (data.summary) {
-                    // Update the summary card values
-                    document.getElementById('count_pending').textContent = data.summary.pending;
-                    document.getElementById('count_approved').textContent = data.summary.approved;
-                    document.getElementById('count_returned').textContent = data.summary.returned;
-                    document.getElementById('count_disapproved').textContent = data.summary.disapproved;
-                }
+            if ((role === 'Admin' || role === 'Superadmin') && data.summary) {
+                let pending = document.getElementById('count_pending');
+                let approved = document.getElementById('count_approved');
+                let returned = document.getElementById('count_returned');
+                let disapproved = document.getElementById('count_disapproved');
+
+                if (pending) pending.textContent = data.summary.pending;
+                if (approved) approved.textContent = data.summary.approved;
+                if (returned) returned.textContent = data.summary.returned;
+                if (disapproved) disapproved.textContent = data.summary.disapproved;
             }
         }
 
