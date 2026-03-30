@@ -49,15 +49,15 @@ namespace BookingAppV2.Controllers
 
         // role-based redirect
         if (role == "Admin")
-          return RedirectToAction("Index", "UserBooking");
+          return RedirectToAction("Index", "Dashboards");
 
         if (role == "Superadmin")
           return RedirectToAction("Index", "Dashboards");
 
         if (role == "Users")
-          return RedirectToAction("Index", "UserBooking");
+          return RedirectToAction("Index", "Dashboards");
         // fallback
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Login");
       }
 
       ViewBag.Error = "Invalid username or password";

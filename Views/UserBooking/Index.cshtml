@@ -184,6 +184,9 @@
                                 <option value="@item.Value">@item.Text</option>
                             }
                         </select>
+                        <!-- Availability Message -->
+                        <div id="availabilityMsg" class="mb-2"></div>
+
                     </div>
 
                     <!-- Hidden fields -->
@@ -478,6 +481,43 @@
                 }, 4000);
             }
         });
+
+
+                // ✅ Check item availability when selecting item in Create modal
+        document.querySelector('select[name="itemID"]').addEventListener('change', function() {
+            var itemID = this.value;
+            var msgDiv = document.getElementById('availabilityMsg');
+
+            if (!itemID) {
+                msgDiv.innerHTML = '';
+                return;
+            }
+
+            fetch('/Dashboards/GetItemAvailability?itemID=' + itemID)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.available === 0) {
+                        msgDiv.innerHTML = `<div class="alert alert-danger py-1">
+                            <i class="bx bx-error"></i>
+                            <strong>${data.itemName}</strong> — No units available.
+                            All ${data.total} unit(s) are currently borrowed.
+                        </div>`;
+                    } else if (data.available <= 2) {
+                        msgDiv.innerHTML = `<div class="alert alert-warning py-1">
+                            <i class="bx bx-error"></i>
+                            <strong>${data.itemName}</strong> — Only
+                            <strong>${data.available}</strong> of ${data.total} unit(s) available.
+                        </div>`;
+                    } else {
+                        msgDiv.innerHTML = `<div class="alert alert-success py-1">
+                            <i class="bx bx-check"></i>
+                            <strong>${data.itemName}</strong> —
+                            <strong>${data.available}</strong> of ${data.total} unit(s) available.
+                        </div>`;
+                    }
+                });
+        });
+
 
     </script>
 }

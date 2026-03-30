@@ -1,698 +1,281 @@
 @{
-  ViewData["Title"] = "Dashboard - Analytics";
-}
-@section VendorStyles {
-<link rel="stylesheet" href="~/vendor/libs/apex-charts/apex-charts.css" />
-}
-@section VendorScripts {
-<script src="~/vendor/libs/apex-charts/apexcharts.js"></script>
-}
-@section PageScripts {
-<script src="~/js/dashboards-analytics.js"></script>
+    ViewData["Title"] = "Dashboard";
+    string role = ViewBag.Role ?? "";
+    var itemAvailability = ViewBag.ItemAvailability as System.Data.DataTable;
+    var bookingSchedule = ViewBag.BookingSchedule as System.Data.DataTable;
 }
 
-@if (ViewBag.SuccessMsg != null)
+<h4 class="fw-bold mb-4">Dashboard</h4>
+
+@* ===== ADMIN SUMMARY CARDS ===== *@
+@if (role == "Admin" || role == "Superadmin")
 {
-    <div id="alert-success" class="alert alert-success alert-dismissible fade show" role="alert">
-        <i class="bx bx-check-circle me-1"></i> @ViewBag.SuccessMsg
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        <div class="alert-timer-bar" style="background:#198754;"></div>
+    <div class="row mb-4">
+        <div class="col-sm-6 col-lg-3 mb-4">
+            <div class="card border-start border-warning border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-muted">Pending</p>
+                            <h3 class="fw-bold text-warning" id="count_pending">@ViewBag.PendingCount</h3>
+                        </div>
+                        <i class="bx bx-time-five text-warning" style="font-size:2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3 mb-4">
+            <div class="card border-start border-success border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-muted">Approved</p>
+                            <h3 class="fw-bold text-success" id="count_approved">@ViewBag.ApprovedCount</h3>
+                        </div>
+                        <i class="bx bx-check-circle text-success" style="font-size:2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3 mb-4">
+            <div class="card border-start border-info border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-muted">Returned</p>
+                            <h3 class="fw-bold text-info" id="count_returned">@ViewBag.ReturnedCount</h3>
+                        </div>
+                        <i class="bx bx-undo text-info" style="font-size:2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3 mb-4">
+            <div class="card border-start border-danger border-4 h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-muted">Disapproved</p>
+                            <h3 class="fw-bold text-danger" id="count_disapproved">@ViewBag.DisapprovedCount</h3>
+                        </div>
+                        <i class="bx bx-x-circle text-danger" style="font-size:2.5rem;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 }
 
-
-<style>
-    .pos-team-poster {
-        width: 100%;
-        height: 500px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        background-image: radial-gradient(circle at center, rgba(0, 123, 255, 0.6) 0%, rgba(89, 87, 199, 0.6) 60%, rgba(21, 5, 128, 0.6) 100%), url("/posteam/KCC.jpg");
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        perspective: 1000px;
-        border-radius: 12px;
-    }
-
-    .pos-team-pic {
-        position: relative;
-    }
-
-    @@keyframes floatTurn {
-        0% {
-            transform: translateY(0px) rotateY(0deg);
-        }
-
-        25% {
-            transform: translateY(-5px) rotateY(10deg);
-        }
-
-        50% {
-            transform: translateY(0px) rotateY(0deg);
-        }
-
-        75% {
-            transform: translateY(-5px) rotateY(-10deg);
-        }
-
-        100% {
-            transform: translateY(0px) rotateY(0deg);
-        }
-    }
-
-   
-    .pos-team-poster img {
-        width: 200px;
-        height: 200px;
-        border-radius: 50%;
-        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, width 0.3s ease-in-out, height 0.3s ease-in-out;
-        animation: floatTurn 4s ease-in-out infinite;
-        animation-play-state: running;
-        transform-style: preserve-3d;
-        backface-visibility: hidden;
-        position: relative;
-        z-index: 1;
-        object-fit: cover;
-        border: 3px solid rgba(255,255,255,0.5);
-    }
-
-        .pos-team-poster img:hover {
-            width: 250px;
-            height: 250px;
-            box-shadow: 0 0 25px rgba(0,0,0,0.75);
-            animation-play-state: paused;
-        }
-
-    .pos-team-poster .pos-team-pic::before {
-        content: "";
-        position: absolute;
-        bottom: 40px;
-        left: 50%;
-        transform: translateX(-50%) translateY(0);
-        font-size: 30px;
-        color: #007bffd0;
-        text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        z-index: 2;
-        text-align: center;
-        white-space: nowrap;
-    }
-
-    .pos-team-poster .pos-team-pic::after {
-        content: "";
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%) translateY(0);
-        font-size: 14px;
-        color: #ffffffcc;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
-        z-index: 2;
-        text-align: center;
-        white-space: nowrap;
-    }
-
-    .pos-team-poster .pos-team-pic:nth-child(1):hover::before {
-        content: "JR";
-        opacity: 1;
-        transform: translateX(-50%) translateY(-10px);
-    }
-
-    .pos-team-poster .pos-team-pic:nth-child(1):hover::after {
-        content: "john.rey.de.asis@kccmalls.ph";
-        opacity: 1;
-        transform: translateX(-50%) translateY(-10px);
-    }
-
-    .pos-team-poster .pos-team-pic:nth-child(2):hover::before {
-        content: "Jeff";
-        opacity: 1;
-        transform: translateX(-50%) translateY(-10px);
-    }
-
-    .pos-team-poster .pos-team-pic:nth-child(2):hover::after {
-        content: "jefferson.p.onganiza@kccmalls.ph";
-        opacity: 1;
-        transform: translateX(-50%) translateY(-10px);
-    }
-
-    .pos-team-poster .pos-team-pic:nth-child(3):hover::before {
-        content: "Vincent";
-        opacity: 1;
-        transform: translateX(-50%) translateY(-10px);
-    }
-
-    .pos-team-poster .pos-team-pic:nth-child(3):hover::after {
-        content: "vincent.boglosa@kccmalls.ph";
-        opacity: 1;
-        transform: translateX(-50%) translateY(-10px);
-    }
-
-    .poster-description {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        padding: 30px 0;
-    }
-  /*   .row mb-2,.col-12{
-      margin-top:50px;
-    } */
-    .card-body, .pos-team-poster{
-      height:600px;
-    }
-</style>
-
-<!-- ========== TEAM POSTER ========== -->
-<div class="row mb-6">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="pos-team-poster">
-                    <div class="pos-team-pic">
-                        <img src="~/posteam/jr.JPG" alt="JR" />
-                    </div>
-                    <div class="pos-team-pic">
-                        <img src="~/posteam/jeff.JPG" alt="Jeff" />
-                    </div>
-                    <div class="pos-team-pic">
-                        <img src="~/posteam/vincent.JPG" alt="Vincent" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-<div class="row mb-2">
-    <div class="col-12 text-center">
-        <h4 class="fw-bold">KCO POS Team</h4>
-        <p class="text-primary">Here's our amazing team working hard to bring you the best experience!</p>
-    </div>
-</div>
-<!-- ========== END TEAM POSTER ========== -->
-
-<script>
-    window.addEventListener('DOMContentLoaded', function () {
-        const alert = document.getElementById('tempAlert');
-        if (alert) {
-            setTimeout(function () {
-                alert.classList.remove('show');
-                setTimeout(function () { alert.remove(); }, 500);
-            }, 4000);
-        }
-    });
-
-
-
-
-</script>
-
-
-
-
-
-@* ************** Content ************** *@
-@* <div class="row">
-  <div class="col-xxl-8 mb-6 order-0">
-    <div class="card">
-      <div class="d-flex align-items-start row">
-        <div class="col-sm-7">
-          <div class="card-body">
-            <h5 class="card-title text-primary mb-3">Congratulations John! 🎉</h5>
-            <p class="mb-6">You have done 72% more sales today.<br />Check your new badge in your profile.</p>
-
-            <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Badges</a>
-          </div>
-        </div>
-        <div class="col-sm-5 text-center text-sm-left">
-          <div class="card-body pb-0 px-0 px-md-6">
-            <img src="~/img/illustrations/man-with-laptop.png" height="175" alt="View Badge User" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="col-xxl-4 col-lg-12 col-md-4 order-1">
-    <div class="row">
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/chart-success.png" alt="chart success" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt3" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt3">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">Profit</p>
-            <h4 class="card-title mb-3">$12,628</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> +72.80%</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6 col-md-12 col-6 mb-6">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/wallet-info.png" alt="wallet info" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt6" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt6">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">Sales</p>
-            <h4 class="card-title mb-3">$4,679</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> +28.42%</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!-- Total Revenue -->
-  <div class="col-12 col-xxl-8 order-2 order-md-3 order-xxl-2 mb-6 total-revenue">
-    <div class="card">
-      <div class="row row-bordered g-0">
-        <div class="col-lg-8">
-          <div class="card-header d-flex align-items-center justify-content-between">
-            <div class="card-title mb-0">
-              <h5 class="m-0 me-2">Total Revenue</h5>
-            </div>
-            <div class="dropdown">
-              <button class="btn p-0" type="button" id="totalRevenue" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                <i class="icon-base bx bx-dots-vertical-rounded icon-lg text-body-secondary"></i>
-              </button>
-              <div class="dropdown-menu dropdown-menu-end" aria-labelledby="totalRevenue">
-                <a class="dropdown-item" href="javascript:void(0);">Select All</a>
-                <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-                <a class="dropdown-item" href="javascript:void(0);">Share</a>
-              </div>
-            </div>
-          </div>
-          <div id="totalRevenueChart" class="px-3"></div>
-        </div>
-        <div class="col-lg-4">
-          <div class="card-body px-xl-9 py-12 d-flex align-items-center flex-column">
-            <div class="text-center mb-6">
-              <div class="btn-group">
-                <button type="button" class="btn btn-outline-primary">
-                  <script>
-                    document.write(new Date().getFullYear() - 1);
-                  </script>
-                </button>
-                <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
-                  <span class="visually-hidden">Toggle Dropdown</span>
-                </button>
-                <ul class="dropdown-menu">
-                  <li><a class="dropdown-item" href="javascript:void(0);">2021</a></li>
-                  <li><a class="dropdown-item" href="javascript:void(0);">2020</a></li>
-                  <li><a class="dropdown-item" href="javascript:void(0);">2019</a></li>
-                </ul>
-              </div>
-            </div>
-
-            <div id="growthChart"></div>
-            <div class="text-center fw-medium my-6">62% Company Growth</div>
-
-            <div class="d-flex gap-11 justify-content-between">
-              <div class="d-flex">
-                <div class="avatar me-2">
-                  <span class="avatar-initial rounded-2 bg-label-primary"><i class="icon-base bx bx-dollar icon-lg text-primary"></i></span>
-                </div>
-                <div class="d-flex flex-column">
-                  <small>
-                    <script>
-                      document.write(new Date().getFullYear() - 1);
-                    </script>
-                  </small>
-                  <h6 class="mb-0">$32.5k</h6>
-                </div>
-              </div>
-              <div class="d-flex">
-                <div class="avatar me-2">
-                  <span class="avatar-initial rounded-2 bg-label-info"><i class="icon-base bx bx-wallet icon-lg text-info"></i></span>
-                </div>
-                <div class="d-flex flex-column">
-                  <small>
-                    <script>
-                      document.write(new Date().getFullYear() - 2);
-                    </script>
-                  </small>
-                  <h6 class="mb-0">$41.2k</h6>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <!--/ Total Revenue -->
-  <div class="col-12 col-md-8 col-lg-12 col-xxl-4 order-3 order-md-2 profile-report">
-    <div class="row">
-      <div class="col-6 mb-6 payments">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/paypal.png" alt="paypal" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt4" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu dropdown-menu-end" aria-labelledby="cardOpt4">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">Payments</p>
-            <h4 class="card-title mb-3">$2,456</h4>
-            <small class="text-danger fw-medium"><i class="icon-base bx bx-down-arrow-alt"></i> -14.82%</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-6 mb-6 transactions">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="card-title d-flex align-items-start justify-content-between mb-4">
-              <div class="avatar flex-shrink-0">
-                <img src="~/img/icons/unicons/cc-primary.png" alt="Credit Card" class="rounded" />
-              </div>
-              <div class="dropdown">
-                <button class="btn p-0" type="button" id="cardOpt1" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="icon-base bx bx-dots-vertical-rounded text-body-secondary"></i>
-                </button>
-                <div class="dropdown-menu" aria-labelledby="cardOpt1">
-                  <a class="dropdown-item" href="javascript:void(0);">View More</a>
-                  <a class="dropdown-item" href="javascript:void(0);">Delete</a>
-                </div>
-              </div>
-            </div>
-            <p class="mb-1">Transactions</p>
-            <h4 class="card-title mb-3">$14,857</h4>
-            <small class="text-success fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> +28.14%</small>
-          </div>
-        </div>
-      </div>
-      <div class="col-12 mb-6 profile-report">
-        <div class="card h-100">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center flex-sm-row flex-column gap-10 flex-wrap">
-              <div class="d-flex flex-sm-column flex-row align-items-start justify-content-between">
-                <div class="card-title mb-6">
-                  <h5 class="text-nowrap mb-1">Profile Report</h5>
-                  <span class="badge bg-label-warning">YEAR 2022</span>
-                </div>
-                <div class="mt-sm-auto">
-                  <span class="text-success text-nowrap fw-medium"><i class="icon-base bx bx-up-arrow-alt"></i> 68.2%</span>
-                  <h4 class="mb-0">$84,686k</h4>
-                </div>
-              </div>
-              <div id="profileReportChart"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
 <div class="row">
-  <!-- Order Statistics -->
-  <div class="col-md-6 col-lg-4 col-xl-4 order-0 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex justify-content-between">
-        <div class="card-title mb-0">
-          <h5 class="mb-1 me-2">Order Statistics</h5>
-          <p class="card-subtitle">42.82k Total Sales</p>
-        </div>
-        <div class="dropdown">
-          <button class="btn text-body-secondary p-0" type="button" id="orederStatistics" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="orederStatistics">
-            <a class="dropdown-item" href="javascript:void(0);">Select All</a>
-            <a class="dropdown-item" href="javascript:void(0);">Refresh</a>
-            <a class="dropdown-item" href="javascript:void(0);">Share</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="d-flex justify-content-between align-items-center mb-6">
-          <div class="d-flex flex-column align-items-center gap-1">
-            <h3 class="mb-1">8,258</h3>
-            <small>Total Orders</small>
-          </div>
-          <div id="orderStatisticsChart"></div>
-        </div>
-        <ul class="p-0 m-0">
-          <li class="d-flex align-items-center mb-5">
-            <div class="avatar flex-shrink-0 me-3">
-              <span class="avatar-initial rounded bg-label-primary"><i class="icon-base bx bx-mobile-alt"></i></span>
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <h6 class="mb-0">Electronic</h6>
-                <small>Mobile, Earbuds, TV</small>
-              </div>
-              <div class="user-progress">
-                <h6 class="mb-0">82.5k</h6>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center mb-5">
-            <div class="avatar flex-shrink-0 me-3">
-              <span class="avatar-initial rounded bg-label-success"><i class="icon-base bx bx-closet"></i></span>
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <h6 class="mb-0">Fashion</h6>
-                <small>T-shirt, Jeans, Shoes</small>
-              </div>
-              <div class="user-progress">
-                <h6 class="mb-0">23.8k</h6>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center mb-5">
-            <div class="avatar flex-shrink-0 me-3">
-              <span class="avatar-initial rounded bg-label-info"><i class="icon-base bx bx-home-alt"></i></span>
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <h6 class="mb-0">Decor</h6>
-                <small>Fine Art, Dining</small>
-              </div>
-              <div class="user-progress">
-                <h6 class="mb-0">849k</h6>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center">
-            <div class="avatar flex-shrink-0 me-3">
-              <span class="avatar-initial rounded bg-label-secondary"><i class="icon-base bx bx-football"></i></span>
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <h6 class="mb-0">Sports</h6>
-                <small>Football, Cricket Kit</small>
-              </div>
-              <div class="user-progress">
-                <h6 class="mb-0">99</h6>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <!--/ Order Statistics -->
 
-  <!-- Expense Overview -->
-  <div class="col-md-6 col-lg-4 order-1 mb-6">
-    <div class="card h-100">
-      <div class="card-header nav-align-top">
-        <ul class="nav nav-pills flex-wrap row-gap-2" role="tablist">
-          <li class="nav-item">
-            <button type="button" class="nav-link active" role="tab" data-bs-toggle="tab" data-bs-target="#navs-tabs-line-card-income" aria-controls="navs-tabs-line-card-income" aria-selected="true">Income</button>
-          </li>
-          <li class="nav-item">
-            <button type="button" class="nav-link" role="tab">Expenses</button>
-          </li>
-          <li class="nav-item">
-            <button type="button" class="nav-link" role="tab">Profit</button>
-          </li>
-        </ul>
-      </div>
-      <div class="card-body">
-        <div class="tab-content p-0">
-          <div class="tab-pane fade show active" id="navs-tabs-line-card-income" role="tabpanel">
-            <div class="d-flex mb-6">
-              <div class="avatar flex-shrink-0 me-3">
-                <img src="~/img/icons/unicons/wallet.png" alt="User" />
-              </div>
-              <div>
-                <p class="mb-0">Total Balance</p>
-                <div class="d-flex align-items-center">
-                  <h6 class="mb-0 me-1">$459.10</h6>
-                  <small class="text-success fw-medium">
-                    <i class="icon-base bx bx-chevron-up icon-lg"></i>
-                    42.9%
-                  </small>
+    @* ===== ITEM AVAILABILITY ===== *@
+    <div class="col-lg-5 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bx bx-package me-1"></i> Item Availability
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Item</th>
+                            <th class="text-center">Total</th>
+                            <th class="text-center">Borrowed</th>
+                            <th class="text-center">Available</th>
+                        </tr>
+                    </thead>
+                    <tbody id="itemAvailabilityBody">
+                        @if (itemAvailability != null && itemAvailability.Rows.Count > 0)
+                        {
+                            foreach (System.Data.DataRow row in itemAvailability.Rows)
+                            {
+                                int total = Convert.ToInt32(row["total_stock"]);
+                                int borrowed = Convert.ToInt32(row["borrowed"]);
+                                int available = Convert.ToInt32(row["available"]);
+                                string badgeClass = available == 0 ? "danger"
+                                                  : available <= 2 ? "warning"
+                                                  : "success";
+
+                                <tr>
+                                    <td>@row["item_name"]</td>
+                                    @if (role == "Admin" || role == "Superadmin")
+                                    {
+                                        <td class="text-center">@total</td>
+                                        <td class="text-center">@borrowed</td>
+                                    }
+                                    <td class="text-center">
+                                        <span class="badge bg-@badgeClass">
+                                            @(available == 0 ? "None" : available.ToString())
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">No items found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @* ===== BOOKING SCHEDULE ===== *@
+    <div class="col-lg-7 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bx bx-calendar me-1"></i>
+                    @(role == "Users" ? "My Department Bookings" : "Active Booking Schedule")
+                </h5>
+                <span class="badge bg-primary">Pending &amp; Approved</span>
+            </div>
+            <div class="card-body p-0">
+                <div style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light" style="position:sticky;top:0;">
+                            <tr>
+                                <th>Item</th>
+                                <th>Department</th>
+                                <th>Qty</th>
+                                <th>Date Requested</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bookingScheduleBody">
+                            @if (bookingSchedule != null && bookingSchedule.Rows.Count > 0)
+                            {
+                                foreach (System.Data.DataRow row in bookingSchedule.Rows)
+                                {
+                                    string status = row["status"].ToString() ?? "";
+                                    string statusClass = status == "Approved" ? "success"
+                                                       : status == "Pending" ? "warning"
+                                                       : "secondary";
+                                    <tr>
+                                        <td>@row["item_name"]</td>
+                                        <td>@row["departmentName"]</td>
+                                        <td>@row["quantity"]</td>
+                                        <td>
+                                            @(row["date_requested"] != DBNull.Value
+                                                ? ((DateTime)row["date_requested"]).ToString("MM-dd-yyyy hh:mm tt")
+                                                : "")
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-@statusClass">@status</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-3">
+                                        No active bookings.
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
-              </div>
             </div>
-            <div id="incomeChart"></div>
-            <div class="d-flex align-items-center justify-content-center mt-6 gap-3">
-              <div class="flex-shrink-0">
-                <div id="expensesOfWeek"></div>
-              </div>
-              <div>
-                <h6 class="mb-0">Income this week</h6>
-                <small>$39k less than last week</small>
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
-  <!--/ Expense Overview -->
+</div>
+@section Scripts {
+    <script>
+        var currentRole = '@Html.Raw(System.Text.Json.JsonSerializer.Serialize(role))';
+        
+        // Parse the role string (remove quotes if present)
+        var role = currentRole.replace(/^"|"$/g, '');
 
-  <!-- Transactions -->
-  <div class="col-md-6 col-lg-4 order-2 mb-6">
-    <div class="card h-100">
-      <div class="card-header d-flex align-items-center justify-content-between">
-        <h5 class="card-title m-0 me-2">Transactions</h5>
-        <div class="dropdown">
-          <button class="btn text-body-secondary p-0" type="button" id="transactionID" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="icon-base bx bx-dots-vertical-rounded icon-lg"></i>
-          </button>
-          <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
-            <a class="dropdown-item" href="javascript:void(0);">Last 28 Days</a>
-            <a class="dropdown-item" href="javascript:void(0);">Last Month</a>
-            <a class="dropdown-item" href="javascript:void(0);">Last Year</a>
-          </div>
-        </div>
-      </div>
-      <div class="card-body pt-4">
-        <ul class="p-0 m-0">
-          <li class="d-flex align-items-center mb-6">
-            <div class="avatar flex-shrink-0 me-3">
-              <img src="~/img/icons/unicons/paypal.png" alt="User" class="rounded" />
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <small class="d-block">Paypal</small>
-                <h6 class="fw-normal mb-0">Send money</h6>
-              </div>
-              <div class="user-progress d-flex align-items-center gap-2">
-                <h6 class="fw-normal mb-0">+82.6</h6>
-                <span class="text-body-secondary">USD</span>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center mb-6">
-            <div class="avatar flex-shrink-0 me-3">
-              <img src="~/img/icons/unicons/wallet.png" alt="User" class="rounded" />
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <small class="d-block">Wallet</small>
-                <h6 class="fw-normal mb-0">Mac'D</h6>
-              </div>
-              <div class="user-progress d-flex align-items-center gap-2">
-                <h6 class="fw-normal mb-0">+270.69</h6>
-                <span class="text-body-secondary">USD</span>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center mb-6">
-            <div class="avatar flex-shrink-0 me-3">
-              <img src="~/img/icons/unicons/chart.png" alt="User" class="rounded" />
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <small class="d-block">Transfer</small>
-                <h6 class="fw-normal mb-0">Refund</h6>
-              </div>
-              <div class="user-progress d-flex align-items-center gap-2">
-                <h6 class="fw-normal mb-0">+637.91</h6>
-                <span class="text-body-secondary">USD</span>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center mb-6">
-            <div class="avatar flex-shrink-0 me-3">
-              <img src="~/img/icons/unicons/cc-primary.png" alt="User" class="rounded" />
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <small class="d-block">Credit Card</small>
-                <h6 class="fw-normal mb-0">Ordered Food</h6>
-              </div>
-              <div class="user-progress d-flex align-items-center gap-2">
-                <h6 class="fw-normal mb-0">-838.71</h6>
-                <span class="text-body-secondary">USD</span>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center mb-6">
-            <div class="avatar flex-shrink-0 me-3">
-              <img src="~/img/icons/unicons/wallet.png" alt="User" class="rounded" />
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <small class="d-block">Wallet</small>
-                <h6 class="fw-normal mb-0">Starbucks</h6>
-              </div>
-              <div class="user-progress d-flex align-items-center gap-2">
-                <h6 class="fw-normal mb-0">+203.33</h6>
-                <span class="text-body-secondary">USD</span>
-              </div>
-            </div>
-          </li>
-          <li class="d-flex align-items-center">
-            <div class="avatar flex-shrink-0 me-3">
-              <img src="~/img/icons/unicons/cc-warning.png" alt="User" class="rounded" />
-            </div>
-            <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
-              <div class="me-2">
-                <small class="d-block">Mastercard</small>
-                <h6 class="fw-normal mb-0">Ordered Food</h6>
-              </div>
-              <div class="user-progress d-flex align-items-center gap-2">
-                <h6 class="fw-normal mb-0">-92.45</h6>
-                <span class="text-body-secondary">USD</span>
-              </div>
-            </div>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-  <!--/ Transactions -->
-</div> *@
+        function renderDashboard(data) {
+            // ===== ITEM AVAILABILITY =====
+            let itemRows = '';
+            data.items.forEach(function(item) {
+                let badgeClass = item.available === 0 ? 'danger'
+                               : item.available <= 2 ? 'warning'
+                               : 'success';
+                let availText = item.available === 0 ? 'None' : item.available;
+
+                let adminCols = '';
+                if (role === 'Admin' || role === 'Superadmin') {
+                    adminCols = `<td class="text-center">${item.total}</td>
+                                 <td class="text-center">${item.borrowed}</td>`;
+                }
+
+                itemRows += `
+                    <tr>
+                        <td>${escapeHtml(item.itemName)}</td>
+                        ${adminCols}
+                        <td class="text-center">
+                            <span class="badge bg-${badgeClass}">${availText}</span>
+                        </td>
+                    </tr>`;
+            });
+
+            if (itemRows === '') {
+                itemRows = '<tr><td colspan="4" class="text-center text-muted py-3">No items found.</td></tr>';
+            }
+            document.getElementById('itemAvailabilityBody').innerHTML = itemRows;
+
+            // ===== BOOKING SCHEDULE =====
+            let scheduleRows = '';
+            data.schedule.forEach(function(b) {
+                let statusClass = b.status === 'Approved' ? 'success'
+                                : b.status === 'Pending' ? 'warning'
+                                : 'secondary';
+                scheduleRows += `
+                    <tr>
+                        <td>${escapeHtml(b.itemName)}</td>
+                        <td>${escapeHtml(b.department)}</td>
+                        <td>${b.quantity}</td>
+                        <td>${b.dateRequested}</td>
+                        <td><span class="badge bg-${statusClass}">${escapeHtml(b.status)}</span></td>
+                    </tr>`;
+            });
+
+            if (scheduleRows === '') {
+                scheduleRows = '<tr><td colspan="5" class="text-center text-muted py-3">No active bookings.</td></tr>';
+            }
+            document.getElementById('bookingScheduleBody').innerHTML = scheduleRows;
+
+            // ===== SUMMARY COUNTS (Admin only) =====
+            // ✅ FIX: Update summary cards using data from the API response
+            if (role === 'Admin' || role === 'Superadmin') {
+                if (data.summary) {
+                    // Update the summary card values
+                    document.getElementById('count_pending').textContent = data.summary.pending;
+                    document.getElementById('count_approved').textContent = data.summary.approved;
+                    document.getElementById('count_returned').textContent = data.summary.returned;
+                    document.getElementById('count_disapproved').textContent = data.summary.disapproved;
+                }
+            }
+        }
+
+        // Helper function to prevent XSS attacks
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function refreshDashboard() {
+            fetch('@Url.Action("GetDashboardData", "Dashboards")')
+                .then(r => r.json())
+                .then(data => renderDashboard(data))
+                .catch(err => console.log('Dashboard refresh error:', err));
+        }
+
+        // Initial load
+        refreshDashboard();
+
+        // ✅ Auto refresh every 5 seconds
+        setInterval(refreshDashboard, 5000);
+    </script>
+}

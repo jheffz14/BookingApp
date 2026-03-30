@@ -1,6 +1,8 @@
 @{
-  TempData.Keep();
-  string? currentPage = ViewContext.HttpContext.Request.Path;
+    TempData.Keep();
+    string? currentPage = ViewContext.HttpContext.Request.Path;
+
+    string appTitle = "Item Booking";
 }
 <style>
     #logoutID {
@@ -95,7 +97,7 @@
                               currentPage.StartsWith("/Users") ? " active open" : "")'>
             <a href="javascript:void(0);" class="menu-link menu-toggle">
                 <i class="menu-icon icon-base bx bx-wrench"></i>
-                <div class="text-truncate">POS Utilities</div>
+                <div class="text-truncate">@appTitle</div>
             </a>
 
             <ul class="menu-sub">

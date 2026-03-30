@@ -215,12 +215,20 @@ namespace BookingAppV2.Controllers
       // ===================== STOCK CHECK ADDED HERE =====================
       int available = _StockService.GetAvailableStock(model.itemID);
 
+      //if (model.quantity > available)
+      //{
+      //  TempData["Error"] =
+      //      "No available units. All are currently borrowed. Contact IT Asset team.";
+      //  return RedirectToAction("Index");
+      //}
       if (model.quantity > available)
       {
-        TempData["Error"] =
-            "No available units. All are currently borrowed. Contact IT Asset team.";
+        TempData["Error"] = available == 0
+            ? $"No units available. All are currently borrowed. Contact IT Asset team."
+            : $"Only {available} unit(s) available. You requested {model.quantity}. Please reduce your quantity.";
         return RedirectToAction("Index");
       }
+
       // ===================== END STOCK CHECK =====================
 
 
