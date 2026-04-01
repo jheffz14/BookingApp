@@ -75,6 +75,10 @@
                                 onclick="openDeleteModal('@row["userID"]')">
                             Delete
                         </button>
+                        <button class="btn btn-warning btn-sm"
+                                onclick="openResetModal('@row["userID"]')">
+                            Reset
+                        </button>
                     </td>
                 </tr>
             }
@@ -139,10 +143,10 @@
                         <label class="form-label">User ID</label>
                         <input type="text" name="userID" class="form-control" required />
                     </div>
-                    <div class="mb-3">
+                  @*   <div class="mb-3">
                         <label class="form-label">Password</label>
                         <input type="password" name="pass_word" class="form-control" required />
-                    </div>
+                    </div> *@
                     <div class="mb-3">
                         <label class="form-label">Role</label>
                         <select name="role" class="form-control" required>
@@ -253,6 +257,38 @@
     </div>
 </div>
 
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="resetPasswordForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <input type="hidden" name="id" id="reset_userID" />
+                    <p>Reset password for <strong id="reset_userName"></strong>?</p>
+                    <div class="alert alert-info">
+                        <i class="bx bx-info-circle me-1"></i>
+                        Password will be reset to: <strong>kcckcc</strong><br />
+                        User must change it on next login.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-warning">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
 @section Scripts {
     <script>
         // =====================
@@ -298,5 +334,15 @@
             document.getElementById('deleteUserForm').action = '/Users/Delete/' + id;
             new bootstrap.Modal(document.getElementById('deleteUserModal')).show();
         }
+
+
+        //reset modal
+                function openResetModal(id) {
+            document.getElementById('reset_userID').value = id;
+            document.getElementById('reset_userName').innerText = id;
+            document.getElementById('resetPasswordForm').action = '/Users/ResetPassword';
+            new bootstrap.Modal(document.getElementById('resetPasswordModal')).show();
+        }
+
     </script>
 }

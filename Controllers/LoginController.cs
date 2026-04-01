@@ -1,24 +1,28 @@
 using BookingAppV2.Connection;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http; // added
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
-
 
 namespace BookingAppV2.Controllers
 {
   public class LoginController : Controller
   {
     private readonly dbAccess _dbAccess;
+
     public LoginController(dbAccess dbAccess)
     {
-        _dbAccess = dbAccess;
+      _dbAccess = dbAccess;
     }
-    // GET: Login
+
     public ActionResult Index()
     {
+      // ✅ Already logged in — redirect to dashboard
+      if (!string.IsNullOrEmpty(HttpContext.Session.GetString("userID")))
+        return RedirectToAction("Index", "Dashboards");
+
       return View();
     }
 
@@ -36,27 +40,42 @@ namespace BookingAppV2.Controllers
 
       if (dt.Rows.Count == 1)
       {
-        string role = dt.Rows[0]["role"].ToString();
-        string departmentID = dt.Rows[0]["Departmentid"].ToString();
+        string role = dt.Rows[0]["role"]?.ToString() ?? "";
+        string departmentID = dt.Rows[0]["Departmentid"]?.ToString() ?? "";
 
-        // store session (ASP.NET Core)
+        // ✅ Safe check — column may not exist for old users
+        bool isDefault = false;
+        try
+        {
+          if (dt.Columns.Contains("is_default_password") &&
+              dt.Rows[0]["is_default_password"] != DBNull.Value)
+          {
+            isDefault = Convert.ToBoolean(dt.Rows[0]["is_default_password"]);
+          }
+        }
+        catch { isDefault = false; }
+
+        // Store session
         HttpContext.Session.SetString("userID", userID);
         HttpContext.Session.SetString("role", role);
         HttpContext.Session.SetString("Departmentid", departmentID);
+        HttpContext.Session.SetString("DepartmentID", departmentID);
+        HttpContext.Session.SetString("is_default_password", isDefault ? "true" : "false");
 
-        string deptID = HttpContext.Session.GetString("Departmentid");
-        string roles = HttpContext.Session.GetString("role");
+        // ✅ Force change password if default
+        if (isDefault)
+          return RedirectToAction("Index", "ChangePass");
 
-        // role-based redirect
+        // ✅ Role-based redirect
         if (role == "Admin")
-          return RedirectToAction("Index", "Dashboards");
+          return RedirectToAction("Index", "UserBooking");
 
         if (role == "Superadmin")
           return RedirectToAction("Index", "Dashboards");
 
         if (role == "Users")
-          return RedirectToAction("Index", "Dashboards");
-        // fallback
+          return RedirectToAction("Index", "UserBooking");
+
         return RedirectToAction("Index", "Login");
       }
 
@@ -66,7 +85,7 @@ namespace BookingAppV2.Controllers
 
     public ActionResult Logout()
     {
-      HttpContext.Session.Clear(); // use Clear in Core
+      HttpContext.Session.Clear();
       HttpContext.Response.Cookies.Delete(".AspNetCore.Session");
       return RedirectToAction("Index", "Login");
     }

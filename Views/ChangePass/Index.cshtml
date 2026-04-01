@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Change Password";
+    // Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@{
+    var errorMsg = TempData["Error"]?.ToString();
+    var successMsg = TempData["Success"]?.ToString();
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">
+                    <i class="bx bx-lock me-1"></i> Change Your Password
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bx bx-info-circle me-1"></i>
+                    You are using the <strong>default password</strong>.
+                    Please change it before continuing.
+                </div>
+
+                @if (errorMsg != null)
+                {
+                    <div class="alert alert-danger">@errorMsg</div>
+                }
+                @if (successMsg != null)
+                {
+                    <div class="alert alert-success">@successMsg</div>
+                }
+
+                <form method="post" asp-controller="ChangePass" asp-action="ChangePassword">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" name="newPassword"
+                               class="form-control" required minlength="6"
+                               placeholder="Minimum 6 characters" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Confirm New Password</label>
+                        <input type="password" name="confirmPassword"
+                               class="form-control" required
+                               placeholder="Repeat new password" />
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bx bx-save me-1"></i> Save New Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

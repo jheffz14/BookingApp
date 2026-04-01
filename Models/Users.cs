@@ -14,5 +14,7 @@ namespace BookingAppV2.Models
     public string DepartmentID { get; set; }
     public string DepartmentName { get; set; } // optional (for views)
 
+    public bool is_default_password { get; set; } // ✅ add this
+
   }
 }

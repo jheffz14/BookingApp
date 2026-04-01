@@ -105,11 +105,18 @@ namespace BookingAppV2.Controllers
         var parameters = new List<OleDbParameter>
                 {
                     new OleDbParameter("?", model.userID),
-                    new OleDbParameter("?", model.pass_word),
+                    //new OleDbParameter("?", model.pass_word),
+                     new OleDbParameter("?", "kcckcc"),   // ✅ always default password
                     new OleDbParameter("?", model.role),
-                    new OleDbParameter("?", model.DepartmentID)
+                    new OleDbParameter("?", model.DepartmentID),
+                     new OleDbParameter("?", true)         // ✅ is_default_password = true
                 };
-        string query = "INSERT INTO Users (userID, pass_word, role, DepartmentID) VALUES (?, ?, ?, ?)";
+        string query = @"INSERT INTO Users (userID,
+                                            pass_word,
+                                            role,
+                                            DepartmentID,
+                                            is_default_password)
+                                            VALUES (?, ?, ?, ?,?)";
         _dbAccess.ExecuteNonQueryBooking(query, parameters);
         TempData["Success"] = "User added successfully.";
       }
@@ -218,6 +225,32 @@ namespace BookingAppV2.Controllers
         DepartmentName = row["DepartmentName"]?.ToString() ?? ""
       };
     }
+
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public ActionResult ResetPassword(string id)
+    {
+      try
+      {
+        var parameters = new List<OleDbParameter>
+        {
+            new OleDbParameter("?", "kcckcc"),
+            new OleDbParameter("?", true),
+            new OleDbParameter("?", id)
+        };
+        string query = "UPDATE Users SET pass_word = ?, is_default_password = ? WHERE userID = ?";
+        _dbAccess.ExecuteNonQueryBooking(query, parameters);
+        TempData["Success"] = $"Password for '{id}' reset to default: kcckcc";
+      }
+      catch (Exception ex)
+      {
+        TempData["Error"] = "Error resetting password: " + ex.Message;
+      }
+      return RedirectToAction("Index");
+    }
+
+   
 
     private List<SelectListItem> GetDepartments()
     {
