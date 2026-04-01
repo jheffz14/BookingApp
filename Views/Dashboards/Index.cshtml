@@ -143,9 +143,6 @@
 
 
     @* ===== BOOKING SCHEDULE ===== *@
-
-   
-   
        @*  <div class="col-lg-7 mb-4" style="width:100%;"> *@
     <div class="@(role == "Users" ? "col-lg-7 mb-4" : "col-lg-7 mb-4")" @(role == "Users" ? "style=width:100%;" : "")>
         <div class="card h-100" > 
@@ -189,7 +186,17 @@
                                                 : "")
                                         </td>
                                         <td>
-                                            <span class="badge bg-@statusClass">@status</span>
+                                           @*  <span class="badge bg-@statusClass">@status</span> *@
+                                            @{
+                                                string statusUrl = status == "Pending"
+                                                    ? "/UserBooking/Index"
+                                                    : status == "Approved"
+                                                    ? "/Status/Index?status=Approved"
+                                                    : "#";
+                                            }
+                                            <a href="@statusUrl" class="badge bg-@statusClass text-decoration-none">
+                                                @status
+                                            </a>
                                         </td>
                                     </tr>
                                 }
@@ -261,15 +268,32 @@
                     let statusClass = b.status === 'Approved' ? 'success'
                                     : b.status === 'Pending' ? 'warning'
                                     : 'secondary';
-                    scheduleRows += `
-                        <tr>
-                            <td>${escapeHtml(b.itemName)}</td>
-                            <td>${escapeHtml(b.userID)}</td>
-                            <td>${escapeHtml(b.department)}</td>
-                            <td>${b.quantity}</td>
-                            <td>${b.dateRequested}</td>
-                            <td><span class="badge bg-${statusClass}">${escapeHtml(b.status)}</span></td>
-                        </tr>`;
+                    // scheduleRows += `
+                    //     <tr>
+                    //         <td>${escapeHtml(b.itemName)}</td>
+                    //         <td>${escapeHtml(b.userID)}</td>
+                    //         <td>${escapeHtml(b.department)}</td>
+                    //         <td>${b.quantity}</td>
+                    //         <td>${b.dateRequested}</td>
+                    //         <td><span class="badge bg-${statusClass}">${escapeHtml(b.status)}</span></td>
+                    //     </tr>`;
+                            let statusUrl = b.status === 'Pending' ? '/UserBooking/Index'
+                      : b.status === 'Approved' ? '/Status/Index?status=Approved'
+                      : '#';
+
+        scheduleRows += `
+            <tr>
+                <td>${escapeHtml(b.itemName)}</td>
+                <td>${escapeHtml(b.userID)}</td>
+                <td>${escapeHtml(b.department)}</td>
+                <td>${b.quantity}</td>
+                <td>${b.dateRequested}</td>
+                <td>
+                    <a href="${statusUrl}" class="badge bg-${statusClass} text-decoration-none">
+                        ${escapeHtml(b.status)}
+                    </a>
+                </td>
+            </tr>`;
                 });
 
                 scheduleBody.innerHTML = scheduleRows ||
