@@ -68,13 +68,13 @@ namespace BookingAppV2.Controllers
 
         // ✅ Role-based redirect
         if (role == "Admin")
-          return RedirectToAction("Index", "UserBooking");
+          return RedirectToAction("Index", "Dashboards");
 
         if (role == "Superadmin")
           return RedirectToAction("Index", "Dashboards");
 
         if (role == "Users")
-          return RedirectToAction("Index", "UserBooking");
+          return RedirectToAction("Index", "Dashboards");
 
         return RedirectToAction("Index", "Login");
       }

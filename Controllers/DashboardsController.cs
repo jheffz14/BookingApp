@@ -140,7 +140,9 @@ namespace BookingAppV2.Controllers
               null).Rows[0]["cnt"]);
 
           ViewBag.DisapprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-              "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'",
+              @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'
+                AND MONTH(date_returned) = MONTH(DATE()) 
+                AND YEAR(date_returned) = YEAR(DATE())",
               null).Rows[0]["cnt"]);
         }
       }
@@ -314,7 +316,9 @@ ORDER BY b.date_requested ASC";
                           AND MONTH(date_returned) = MONTH(DATE()) 
                           AND YEAR(date_returned) = YEAR(DATE())", null).Rows[0]["cnt"]);
         int disapproved = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-            "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'", null).Rows[0]["cnt"]);
+            @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'
+                           AND MONTH(date_returned) = MONTH(DATE()) 
+                          AND YEAR(date_returned) = YEAR(DATE())", null).Rows[0]["cnt"]);
 
         // ✅ Build the summary object for JSON
         summary = new
