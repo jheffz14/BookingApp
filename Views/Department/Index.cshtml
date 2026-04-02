@@ -4,10 +4,14 @@
 }
 
 @{
-    var successMsg = TempData["Success"]?.ToString();
     var errorMsg = TempData["Error"]?.ToString();
+    var successMsg = TempData["Success"]?.ToString();
+    var warningMsg = TempData["Warning"]?.ToString();
+    var dangerMsg = TempData["Danger"]?.ToString();
     TempData.Remove("Success");
     TempData.Remove("Error");
+    TempData.Remove("Warning");
+    TempData.Remove("Danger");
 }
 
 @if (successMsg != null)

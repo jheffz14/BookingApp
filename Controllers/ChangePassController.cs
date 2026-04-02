@@ -96,7 +96,7 @@ namespace BookingAppV2.Controllers
       catch (Exception ex)
       {
         TempData["Error"] = "Error: " + ex.Message;
-        return RedirectToAction("ChangePassword");
+        return RedirectToAction("Index");
       }
     }
 

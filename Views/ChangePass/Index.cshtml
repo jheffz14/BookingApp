@@ -6,6 +6,12 @@
 @{
     var errorMsg = TempData["Error"]?.ToString();
     var successMsg = TempData["Success"]?.ToString();
+    var warningMsg = TempData["Warning"]?.ToString();
+    var dangerMsg = TempData["Danger"]?.ToString();
+    TempData.Remove("Success");
+    TempData.Remove("Error");
+    TempData.Remove("Warning");
+    TempData.Remove("Danger");
 }
 
 <div class="row justify-content-center mt-5">
@@ -31,7 +37,11 @@
                 {
                     <div class="alert alert-success">@successMsg</div>
                 }
-
+                @if (warningMsg != null)
+                {
+                    <div class="alert alert-warning">@warningMsg</div>
+                }
+               
                 <form method="post" asp-controller="ChangePass" asp-action="ChangePassword">
                     @Html.AntiForgeryToken()
                     <div class="mb-3">
@@ -54,3 +64,20 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+  <script>
+        // =====================
+           // Auto dismiss alert
+           // =====================
+           window.addEventListener('DOMContentLoaded', function () {
+               const alert = document.getElementById('tempAlert');
+               if (alert) {
+                   setTimeout(function () {
+                       alert.classList.remove('show');
+                       setTimeout(function () { alert.remove(); }, 500);
+                   }, 5000);
+               }
+           });
+  </script>
+}

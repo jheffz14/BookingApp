@@ -6,6 +6,15 @@
 
     // ✅ Core session
     string currentRole = Context.Session.GetString("role") ?? "";
+
+    var errorMsg = TempData["Error"]?.ToString();
+    var successMsg = TempData["Success"]?.ToString();
+    var warningMsg = TempData["Warning"]?.ToString();
+    var dangerMsg = TempData["Danger"]?.ToString();
+    TempData.Remove("Success");
+    TempData.Remove("Error");
+    TempData.Remove("Warning");
+    TempData.Remove("Danger");
 }
 
 <script>
@@ -496,6 +505,17 @@
             new bootstrap.Modal(document.getElementById('deleteBookingModal')).show();
         }
 
-
+         // =====================
+           // Auto dismiss alert
+           // =====================
+           window.addEventListener('DOMContentLoaded', function () {
+               const alert = document.getElementById('tempAlert');
+               if (alert) {
+                   setTimeout(function () {
+                       alert.classList.remove('show');
+                       setTimeout(function () { alert.remove(); }, 500);
+                   }, 5000);
+               }
+           });
     </script>
 }

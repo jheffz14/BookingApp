@@ -7,6 +7,7 @@ namespace BookingAppV2.Controllers
     public IActionResult Index()
     {
       Response.StatusCode = 403;
+      HttpContext.Session.Clear();
       return View();
     }
   }
