@@ -1,17 +1,14 @@
 @{
     ViewData["Title"] = "Change Password";
-    // Layout = "~/Views/Shared/_Layout.cshtml";
 }
 
 @{
     var errorMsg = TempData["Error"]?.ToString();
     var successMsg = TempData["Success"]?.ToString();
     var warningMsg = TempData["Warning"]?.ToString();
-    var dangerMsg = TempData["Danger"]?.ToString();
     TempData.Remove("Success");
     TempData.Remove("Error");
     TempData.Remove("Warning");
-    TempData.Remove("Danger");
 }
 
 <div class="row justify-content-center mt-5">
@@ -31,32 +28,60 @@
 
                 @if (errorMsg != null)
                 {
-                    <div class="alert alert-danger">@errorMsg</div>
+                    <div id="tempAlert" class="alert alert-danger alert-dismissible fade show">
+                        <i class="bx bx-x-circle me-1"></i> @errorMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                 }
                 @if (successMsg != null)
                 {
-                    <div class="alert alert-success">@successMsg</div>
+                    <div id="tempAlert" class="alert alert-success alert-dismissible fade show">
+                        <i class="bx bx-check-circle me-1"></i> @successMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                 }
                 @if (warningMsg != null)
                 {
-                    <div class="alert alert-warning">@warningMsg</div>
+                    <div id="tempAlert" class="alert alert-warning alert-dismissible fade show">
+                        <i class="bx bx-error me-1"></i> @warningMsg
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
                 }
-               
+
                 <form method="post" asp-controller="ChangePass" asp-action="ChangePassword">
                     @Html.AntiForgeryToken()
+
+                    <!-- New Password -->
                     <div class="mb-3">
                         <label class="form-label">New Password</label>
-                        <input type="password" name="newPassword"
-                               class="form-control" required minlength="6"
-                               placeholder="Minimum 6 characters" />
+                        <div class="input-group">
+                            <input type="password" name="newPassword" id="newPassword"
+                                   class="form-control" required minlength="6"
+                                   placeholder="Minimum 6 characters" />
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="togglePassword('newPassword', 'iconNew')">
+                                <i class="bx bx-hide" id="iconNew"></i>
+                            </button>
+                        </div>
                     </div>
+
+                    <!-- Confirm Password -->
                     <div class="mb-3">
                         <label class="form-label">Confirm New Password</label>
-                        <input type="password" name="confirmPassword"
-                               class="form-control" required
-                               placeholder="Repeat new password" />
+                        <div class="input-group">
+                            <input type="password" name="confirmPassword" id="confirmPassword"
+                                   class="form-control" required
+                                   placeholder="Repeat new password" />
+                            <button type="button" class="btn btn-outline-secondary"
+                                    onclick="togglePassword('confirmPassword', 'iconConfirm')">
+                                <i class="bx bx-hide" id="iconConfirm"></i>
+                            </button>
+                        </div>
+                        <!-- ✅ Live match indicator -->
+                        <small id="matchMsg" class="mt-1 d-block"></small>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">
+
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
                         <i class="bx bx-save me-1"></i> Save New Password
                     </button>
                 </form>
@@ -66,18 +91,60 @@
 </div>
 
 @section Scripts {
-  <script>
+    <script>
         // =====================
-           // Auto dismiss alert
-           // =====================
-           window.addEventListener('DOMContentLoaded', function () {
-               const alert = document.getElementById('tempAlert');
-               if (alert) {
-                   setTimeout(function () {
-                       alert.classList.remove('show');
-                       setTimeout(function () { alert.remove(); }, 500);
-                   }, 5000);
-               }
-           });
-  </script>
+        // Toggle password visibility
+        // =====================
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bx-hide');
+                icon.classList.add('bx-show');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bx-show');
+                icon.classList.add('bx-hide');
+            }
+        }
+
+        // =====================
+        // Live password match check
+        // =====================
+        document.getElementById('confirmPassword').addEventListener('input', function () {
+            const newPass = document.getElementById('newPassword').value;
+            const confirmPass = this.value;
+            const matchMsg = document.getElementById('matchMsg');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (confirmPass === '') {
+                matchMsg.innerHTML = '';
+                submitBtn.disabled = false;
+                return;
+            }
+
+            if (newPass === confirmPass) {
+                matchMsg.innerHTML = '<span class="text-success"><i class="bx bx-check"></i> Passwords match</span>';
+                submitBtn.disabled = false;
+            } else {
+                matchMsg.innerHTML = '<span class="text-danger"><i class="bx bx-x"></i> Passwords do not match</span>';
+                submitBtn.disabled = true;
+            }
+        });
+
+        // =====================
+        // Auto dismiss alert
+        // =====================
+        window.addEventListener('DOMContentLoaded', function () {
+            const alert = document.getElementById('tempAlert');
+            if (alert) {
+                setTimeout(function () {
+                    alert.classList.remove('show');
+                    setTimeout(function () { alert.remove(); }, 500);
+                }, 5000);
+            }
+        });
+    </script>
 }

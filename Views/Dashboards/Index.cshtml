@@ -12,62 +12,71 @@
 {
     <div class="row mb-4">
         <div class="col-sm-6 col-lg-3 mb-4">
-            <div class="card border-start border-warning border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-1 text-muted">Pending</p>
-                            <h3 class="fw-bold text-warning" id="count_pending">@ViewBag.PendingCount</h3>
+            <a href="/UserBooking/Index" class="text-decoration-none">
+                @* ✅ clickable *@
+                <div class="card border-start border-warning border-4 h-100 dashboard-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-1 text-muted">Pending</p>
+                                <h3 class="fw-bold text-warning" id="count_pending">@ViewBag.PendingCount</h3>
+                            </div>
+                            <i class="bx bx-time-five text-warning" style="font-size:2.5rem;"></i>
                         </div>
-                        <i class="bx bx-time-five text-warning" style="font-size:2.5rem;"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-sm-6 col-lg-3 mb-4">
-            <div class="card border-start border-success border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-1 text-muted">Approved</p>
-                            <h3 class="fw-bold text-success" id="count_approved">@ViewBag.ApprovedCount</h3>
+            <a href="/Status/Index?status=Approved" class="text-decoration-none">
+                @* ✅ clickable *@
+                <div class="card border-start border-success border-4 h-100 dashboard-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-1 text-muted">Approved</p>
+                                <h3 class="fw-bold text-success" id="count_approved">@ViewBag.ApprovedCount</h3>
+                            </div>
+                            <i class="bx bx-check-circle text-success" style="font-size:2.5rem;"></i>
                         </div>
-                        <i class="bx bx-check-circle text-success" style="font-size:2.5rem;"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-sm-6 col-lg-3 mb-4">
-            <div class="card border-start border-info border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-1 text-muted">Returned
-                                <small class="text-info">
-                                    (@DateTime.Now.ToString("MMM yyyy"))
-                                </small>
-                            </p>
-                            <h3 class="fw-bold text-info" id="count_returned">
-                              @ViewBag.ReturnedCount
-                            </h3>
+            <a href="/Status/Index?status=Returned" class="text-decoration-none">
+                @* ✅ clickable *@
+                <div class="card border-start border-info border-4 h-100 dashboard-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-1 text-muted">
+                                    Returned
+                                    <small class="text-info">(@DateTime.Now.ToString("MMM yyyy"))</small>
+                                </p>
+                                <h3 class="fw-bold text-info" id="count_returned">@ViewBag.ReturnedCount</h3>
+                            </div>
+                            <i class="bx bx-undo text-info" style="font-size:2.5rem;"></i>
                         </div>
-                        <i class="bx bx-undo text-info" style="font-size:2.5rem;"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
         <div class="col-sm-6 col-lg-3 mb-4">
-            <div class="card border-start border-danger border-4 h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <p class="mb-1 text-muted">Disapproved</p>
-                            <h3 class="fw-bold text-danger" id="count_disapproved">@ViewBag.DisapprovedCount</h3>
+            <a href="/Status/Index?status=Disapproved" class="text-decoration-none">
+                @* ✅ clickable *@
+                <div class="card border-start border-danger border-4 h-100 dashboard-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="mb-1 text-muted">Disapproved</p>
+                                <h3 class="fw-bold text-danger" id="count_disapproved">@ViewBag.DisapprovedCount</h3>
+                            </div>
+                            <i class="bx bx-x-circle text-danger" style="font-size:2.5rem;"></i>
                         </div>
-                        <i class="bx bx-x-circle text-danger" style="font-size:2.5rem;"></i>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 }
@@ -85,6 +94,7 @@
  
 
     <div class="col-lg-5 mb-4">
+           <a href="/Item/Index" class="text-decoration-none">
         <div class="card h-100">
             <div class="card-header">
                 <h5 class="mb-0">
@@ -138,6 +148,8 @@
                 </table>
             </div>
         </div>
+
+        </a>
     </div>
 
                   
