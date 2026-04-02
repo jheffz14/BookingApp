@@ -59,19 +59,19 @@ namespace BookingAppV2.Controllers
       if (newPassword != confirmPassword)
       {
         TempData["Error"] = "Passwords do not match.";
-        return RedirectToAction("ChangePassword");
+        return RedirectToAction("Index");
       }
 
       if (newPassword == "kcckcc")
       {
         TempData["Error"] = "New password cannot be the default password.";
-        return RedirectToAction("ChangePassword");
+        return RedirectToAction("Index");
       }
 
       if (newPassword.Length < 6)
       {
         TempData["Error"] = "Password must be at least 6 characters.";
-        return RedirectToAction("ChangePassword");
+        return RedirectToAction("Index");
       }
 
       try
