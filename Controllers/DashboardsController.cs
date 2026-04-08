@@ -76,30 +76,31 @@ namespace BookingAppV2.Controllers
         DataTable summary = _dbAccess.ExecuteQueryBooking(summaryQuery, null);
         if (summary.Rows.Count > 0)
         {
-          //ViewBag.PendingCount = summary.Rows[0]["pending"];
-          //ViewBag.ApprovedCount = summary.Rows[0]["approved"];
-          //ViewBag.ReturnedCount = summary.Rows[0]["returned"];
-          //ViewBag.DisapprovedCount = summary.Rows[0]["disapproved"];
+          
           // ✅ NEW - separate COUNT queries
-          ViewBag.PendingCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-              "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Pending'",
+          string countPending = _bookingService.GetPendingCountQuery();
+          _dbAccess.ExecuteNonQueryBooking(countPending);
+
+          string countApproved = _bookingService.GetApprovedCountQuery();
+          _dbAccess.ExecuteNonQueryBooking(countApproved);
+
+          string countReturned = _bookingService.GetReturnedCountQuery();
+          _dbAccess.ExecuteNonQueryBooking(countReturned);
+
+          string countDisapproved = _bookingService.GetDisapprovedCountQuery();
+          _dbAccess.ExecuteNonQueryBooking(countDisapproved);
+
+
+          ViewBag.PendingCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countPending,
               null).Rows[0]["cnt"]);
 
-          ViewBag.ApprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-              "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Approved'",
+          ViewBag.ApprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countApproved,
               null).Rows[0]["cnt"]);
 
-          ViewBag.ReturnedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-              @"SELECT COUNT(*) AS cnt FROM BookingTrans 
-      WHERE status = 'Returned' 
-      AND MONTH(date_returned) = MONTH(DATE()) 
-      AND YEAR(date_returned) = YEAR(DATE())",
+          ViewBag.ReturnedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countReturned,
               null).Rows[0]["cnt"]);
 
-          ViewBag.DisapprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-              @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'
-                AND MONTH(date_returned) = MONTH(DATE()) 
-                AND YEAR(date_returned) = YEAR(DATE())",
+          ViewBag.DisapprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countDisapproved,
               null).Rows[0]["cnt"]);
         }
       }

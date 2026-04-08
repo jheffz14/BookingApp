@@ -134,7 +134,36 @@ namespace BookingAppV2.Services
       return query;
     }
 
-
-
+    public string GetPendingCountQuery() {
+      string query = @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Pending'";
+      return query;
     }
+
+    public string GetApprovedCountQuery()
+    {
+      string query = @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Approved'";
+      return query;
+    }
+
+    public string GetReturnedCountQuery() {
+
+      string query = @"SELECT COUNT(*) AS cnt FROM BookingTrans 
+      WHERE status = 'Returned' 
+      AND MONTH(date_returned) = MONTH(DATE()) 
+      AND YEAR(date_returned) = YEAR(DATE())";
+      return query;
+    }
+
+
+    public string GetDisapprovedCountQuery()
+    {
+      string query = @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'
+                AND MONTH(date_returned) = MONTH(DATE()) 
+                AND YEAR(date_returned) = YEAR(DATE())";
+      return query;
+    }
+
+
+
+  }
 }
