@@ -58,5 +58,21 @@ namespace BookingAppV2.Services
     }
 
 
+    public string GetItemAvailabilityQuery()
+    {
+      string query = $@"
+              SELECT 
+        i.item_name,
+        i.total_stock,
+        IIF(SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0)) IS NULL, 0,
+            SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0))) AS borrowed
+    FROM Items i
+    LEFT JOIN BookingTrans b ON i.itemID = b.itemID
+    WHERE i.itemID = ?
+    GROUP BY i.itemID, i.item_name, i.total_stock";
+      return query;
+    }
+
+
+    }
   }
-}
