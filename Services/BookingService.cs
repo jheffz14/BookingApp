@@ -122,5 +122,19 @@ namespace BookingAppV2.Services
       return query;
     }
 
+
+    public string GetSummaryQuery() {
+      string query = @"
+                    SELECT
+                        SUM(IIF(status='Pending', 1, 0)) AS pending,
+                        SUM(IIF(status='Approved', 1, 0)) AS approved,
+                        SUM(IIF(status='Returned', 1, 0)) AS returned,
+                        SUM(IIF(status='Disapproved', 1, 0)) AS disapproved
+                    FROM BookingTrans";
+      return query;
+    }
+
+
+
     }
 }

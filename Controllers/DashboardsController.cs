@@ -71,13 +71,7 @@ namespace BookingAppV2.Controllers
       // ✅ Summary counts — Admin only
       if (role == "Admin" || role == "Superadmin")
       {
-        string summaryQuery = @"
-                    SELECT
-                        SUM(IIF(status='Pending', 1, 0)) AS pending,
-                        SUM(IIF(status='Approved', 1, 0)) AS approved,
-                        SUM(IIF(status='Returned', 1, 0)) AS returned,
-                        SUM(IIF(status='Disapproved', 1, 0)) AS disapproved
-                    FROM BookingTrans";
+        string summaryQuery = _bookingService.GetSummaryQuery();
 
         DataTable summary = _dbAccess.ExecuteQueryBooking(summaryQuery, null);
         if (summary.Rows.Count > 0)
