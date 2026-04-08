@@ -163,6 +163,42 @@ namespace BookingAppV2.Services
       return query;
     }
 
+    //Dashboard - Schedule - User
+    public string GetDBSchedUserQuery()
+    {
+      string query = @" SELECT i.item_name,
+                   u.userID,
+                   d.departmentName,
+                   b.quantity,
+                   b.date_requested,
+                   b.status
+          FROM (((BookingTrans b 
+                 INNER JOIN Items i ON b.itemID = i.itemID)
+                 INNER JOIN Department d ON b.departmentID = d.departmentID)
+                 INNER JOIN Users u ON b.userID = u.userID)
+            WHERE b.status IN ('Pending','Approved')
+            AND b.departmentID = ?
+            ORDER BY b.date_requested ASC";
+      return query;
+    }
+
+    //Dashboard - Schedule - Admin - Superadmin
+    public string GetDBSchedAdminQuery()
+    {
+      string query = @"SELECT i.item_name,
+                      u.userID,
+                      d.departmentName,
+                      b.quantity,
+                      b.date_requested,
+                      b.status
+               FROM (((BookingTrans b 
+                      INNER JOIN Items i ON b.itemID = i.itemID)
+                      INNER JOIN Department d ON b.departmentID = d.departmentID)
+                      INNER JOIN Users u ON b.userID = u.userID)
+               WHERE b.status IN ('Pending','Approved')
+               ORDER BY b.date_requested ASC";
+      return query;
+    }
 
 
   }

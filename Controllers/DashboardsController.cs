@@ -16,6 +16,8 @@ namespace BookingAppV2.Controllers
     private readonly ItemService _itemService;
     private readonly BookingService _bookingService;
 
+  
+
     public DashboardsController(dbAccess dbAccess,
                                 ItemService itemService,
                                 BookingService bookingService)
@@ -24,6 +26,30 @@ namespace BookingAppV2.Controllers
       _itemService = itemService;
       _bookingService = bookingService;
     }
+
+    private (int pending, int approved, int returned, int disapproved) StatusCount()
+    {
+      string countPending = _bookingService.GetPendingCountQuery();
+      string countApproved = _bookingService.GetApprovedCountQuery();
+      string countReturned = _bookingService.GetReturnedCountQuery();
+      string countDisapproved = _bookingService.GetDisapprovedCountQuery();
+
+      int pending = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countPending, null).Rows[0]["cnt"]);
+      int approved = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countApproved, null).Rows[0]["cnt"]);
+      int returned = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countReturned, null).Rows[0]["cnt"]);
+      int disapproved = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countDisapproved, null).Rows[0]["cnt"]);
+
+      // ✅ Set ViewBag for Index view
+      ViewBag.PendingCount = pending;
+      ViewBag.ApprovedCount = approved;
+      ViewBag.ReturnedCount = returned;
+      ViewBag.DisapprovedCount = disapproved;
+
+      // ✅ Return for JSON use in GetDashboardData
+      return (pending, approved, returned, disapproved);
+    }
+
+
     public override void OnActionExecuting(ActionExecutingContext filterContext)
     {
       base.OnActionExecuting(filterContext);
@@ -76,32 +102,8 @@ namespace BookingAppV2.Controllers
         DataTable summary = _dbAccess.ExecuteQueryBooking(summaryQuery, null);
         if (summary.Rows.Count > 0)
         {
-          
-          // ✅ NEW - separate COUNT queries
-          string countPending = _bookingService.GetPendingCountQuery();
-          _dbAccess.ExecuteNonQueryBooking(countPending);
-
-          string countApproved = _bookingService.GetApprovedCountQuery();
-          _dbAccess.ExecuteNonQueryBooking(countApproved);
-
-          string countReturned = _bookingService.GetReturnedCountQuery();
-          _dbAccess.ExecuteNonQueryBooking(countReturned);
-
-          string countDisapproved = _bookingService.GetDisapprovedCountQuery();
-          _dbAccess.ExecuteNonQueryBooking(countDisapproved);
-
-
-          ViewBag.PendingCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countPending,
-              null).Rows[0]["cnt"]);
-
-          ViewBag.ApprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countApproved,
-              null).Rows[0]["cnt"]);
-
-          ViewBag.ReturnedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countReturned,
-              null).Rows[0]["cnt"]);
-
-          ViewBag.DisapprovedCount = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(countDisapproved,
-              null).Rows[0]["cnt"]);
+         
+          StatusCount();
         }
       }
 
@@ -153,27 +155,9 @@ namespace BookingAppV2.Controllers
       string? role = HttpContext.Session.GetString("role");
       string? deptID = HttpContext.Session.GetString("Departmentid");
 
-      //// Validate role is allowed
-      //if (role != "Admin" && role != "Superadmin")
-      //{
-      //  return Json(new { error = "Access denied" },
-      //             System.Text.Json.JsonSerializerOptions.Web);
-      //}
-
+     
       // Item availability
-      string itemQuery = @"
-        SELECT 
-            i.itemID,
-            i.item_name,
-            i.total_stock,
-            IIF(SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0)) IS NULL, 0,
-                SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0))) AS borrowed,
-            i.total_stock - IIF(SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0)) IS NULL, 0,
-                SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0))) AS available
-        FROM Items i
-        LEFT JOIN BookingTrans b ON i.itemID = b.itemID
-        GROUP BY i.itemID, i.item_name, i.total_stock
-        ORDER BY i.item_name ASC";
+      string itemQuery = _itemService.GetItemQuery();
 
       DataTable itemDt = _dbAccess.ExecuteQueryBooking(itemQuery, null);
 
@@ -195,20 +179,8 @@ namespace BookingAppV2.Controllers
 
       if (role == "Users" && !string.IsNullOrEmpty(deptID))
       {
-        scheduleQuery = @"
-            SELECT i.item_name,
-                   u.userID,
-                   d.departmentName,
-                   b.quantity,
-                   b.date_requested,
-                   b.status
-          FROM (((BookingTrans b 
-                 INNER JOIN Items i ON b.itemID = i.itemID)
-                 INNER JOIN Department d ON b.departmentID = d.departmentID)
-                 INNER JOIN Users u ON b.userID = u.userID)
-            WHERE b.status IN ('Pending','Approved')
-            AND b.departmentID = ?
-            ORDER BY b.date_requested ASC";
+        scheduleQuery = _bookingService.GetDBSchedUserQuery();
+
         scheduleParams = new List<OleDbParameter>
         {
             new OleDbParameter(" ? ", deptID)
@@ -216,19 +188,7 @@ namespace BookingAppV2.Controllers
       }
       else
       {
-        scheduleQuery = @"
-          SELECT i.item_name,
-       u.userID,
-       d.departmentName,
-       b.quantity,
-       b.date_requested,
-       b.status
-FROM (((BookingTrans b 
-       INNER JOIN Items i ON b.itemID = i.itemID)
-       INNER JOIN Department d ON b.departmentID = d.departmentID)
-       INNER JOIN Users u ON b.userID = u.userID)
-WHERE b.status IN ('Pending','Approved')
-ORDER BY b.date_requested ASC";
+        scheduleQuery = _bookingService.GetDBSchedAdminQuery();
       }
 
       DataTable scheduleDt = _dbAccess.ExecuteQueryBooking(scheduleQuery, scheduleParams);
@@ -252,22 +212,7 @@ ORDER BY b.date_requested ASC";
       object? summary = null;
       if (role == "Admin" || role == "Superadmin")
       {
-        int pending = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-          "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Pending'", null).Rows[0]["cnt"]);
-        int approved = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-            "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Approved'", null).Rows[0]["cnt"]);
-        //int returned = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-        //    "SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Returned'", null).Rows[0]["cnt"]);
-
-        int returned = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-                        @"SELECT COUNT(*) AS cnt FROM BookingTrans 
-                          WHERE status = 'Returned' 
-                          AND MONTH(date_returned) = MONTH(DATE()) 
-                          AND YEAR(date_returned) = YEAR(DATE())", null).Rows[0]["cnt"]);
-        int disapproved = Convert.ToInt32(_dbAccess.ExecuteQueryBooking(
-            @"SELECT COUNT(*) AS cnt FROM BookingTrans WHERE status = 'Disapproved'
-                           AND MONTH(date_returned) = MONTH(DATE()) 
-                          AND YEAR(date_returned) = YEAR(DATE())", null).Rows[0]["cnt"]);
+        var (pending, approved, returned, disapproved) = StatusCount();
 
         // ✅ Build the summary object for JSON
         summary = new
