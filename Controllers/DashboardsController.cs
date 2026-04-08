@@ -6,16 +6,23 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
+using BookingAppV2.Services;
 
 namespace BookingAppV2.Controllers
 {
   public class DashboardsController : BaseController
   {
     private readonly dbAccess _dbAccess;
+    private readonly ItemService _itemService;
+    private readonly BookingService _bookingService;
 
-    public DashboardsController(dbAccess dbAccess)
+    public DashboardsController(dbAccess dbAccess,
+                                ItemService itemService,
+                                BookingService bookingService)
     {
       _dbAccess = dbAccess;
+      _itemService = itemService;
+      _bookingService = bookingService;
     }
     public override void OnActionExecuting(ActionExecutingContext filterContext)
     {
@@ -33,20 +40,7 @@ namespace BookingAppV2.Controllers
       string? role = HttpContext.Session.GetString("role");
       string? deptID = HttpContext.Session.GetString("Departmentid");
 
-      // ✅ Item availability — all roles see this
-      string itemQuery = @"
-    SELECT 
-        i.itemID,
-        i.item_name,
-        i.total_stock,
-        IIF(SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0)) IS NULL, 0, 
-            SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0))) AS borrowed,
-        i.total_stock - IIF(SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0)) IS NULL, 0, 
-            SUM(IIF(b.status = 'Approved' OR b.status = 'Pending', b.quantity, 0))) AS available
-    FROM Items i
-    LEFT JOIN BookingTrans b ON i.itemID = b.itemID
-    GROUP BY i.itemID, i.item_name, i.total_stock
-    ORDER BY i.item_name ASC";
+      string itemQuery = _itemService.GetItemQuery();
 
       DataTable itemAvailability = _dbAccess.ExecuteQueryBooking(itemQuery, null);
       ViewBag.ItemAvailability = itemAvailability;
@@ -58,23 +52,7 @@ namespace BookingAppV2.Controllers
       if (role == "Users" && !string.IsNullOrEmpty(deptID))
       {
         // Users see only their department's bookings
-        scheduleQuery = @"
-                    SELECT 
-                        b.bookingID,
-                        i.item_name,
-                        d.departmentName,
-                        b.userID,
-                        b.quantity,
-                        b.purpose,
-                        b.date_requested,
-                        b.date_returned,
-                        b.status
-                    FROM ((BookingTrans b
-                    INNER JOIN Items i ON b.itemID = i.itemID)
-                    INNER JOIN Department d ON b.departmentID = d.departmentID)
-                    WHERE b.status IN ('Pending','Approved')
-                    AND b.departmentID = ?
-                    ORDER BY b.date_requested ASC";
+        scheduleQuery = _bookingService.GetScheduleUserQuery();
 
         scheduleParams = new List<OleDbParameter>
                 {
@@ -84,22 +62,7 @@ namespace BookingAppV2.Controllers
       else
       {
         // Admin sees all
-        scheduleQuery = @"
-                    SELECT 
-                        b.bookingID,
-                        i.item_name,
-                        d.departmentName,
-                        b.userID,
-                        b.quantity,
-                        b.purpose,
-                        b.date_requested,
-                        b.date_returned,
-                        b.status
-                    FROM ((BookingTrans b
-                    INNER JOIN Items i ON b.itemID = i.itemID)
-                    INNER JOIN Department d ON b.departmentID = d.departmentID)
-                    WHERE b.status IN ('Pending','Approved')
-                    ORDER BY b.date_requested ASC";
+        scheduleQuery = _bookingService.GetScheduleAdminQuery();
       }
 
       DataTable bookingSchedule = _dbAccess.ExecuteQueryBooking(scheduleQuery, scheduleParams);

@@ -79,8 +79,48 @@ namespace BookingAppV2.Services
       _dbAccess.ExecuteNonQueryBooking(query, parameters);
     }
 
+    public string GetScheduleUserQuery()
+    {
+      string query = @"
+                    SELECT 
+                        b.bookingID,
+                        i.item_name,
+                        d.departmentName,
+                        b.userID,
+                        b.quantity,
+                        b.purpose,
+                        b.date_requested,
+                        b.date_returned,
+                        b.status
+                    FROM ((BookingTrans b
+                    INNER JOIN Items i ON b.itemID = i.itemID)
+                    INNER JOIN Department d ON b.departmentID = d.departmentID)
+                    WHERE b.status IN ('Pending','Approved')
+                    AND b.departmentID = ?
+                    ORDER BY b.date_requested ASC";
+      return query;
+    }
 
+    public string GetScheduleAdminQuery()
+    {
+      string query = @"
+                    SELECT 
+                        b.bookingID,
+                        i.item_name,
+                        d.departmentName,
+                        b.userID,
+                        b.quantity,
+                        b.purpose,
+                        b.date_requested,
+                        b.date_returned,
+                        b.status
+                    FROM ((BookingTrans b
+                    INNER JOIN Items i ON b.itemID = i.itemID)
+                    INNER JOIN Department d ON b.departmentID = d.departmentID)
+                    WHERE b.status IN ('Pending','Approved')
+                    ORDER BY b.date_requested ASC";
+      return query;
+    }
 
-
-  }
+    }
 }
