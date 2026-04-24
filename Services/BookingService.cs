@@ -4,12 +4,14 @@ using BookingAppV2.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
 using System.Linq;
 using System.Web.Mvc;
+using System.Text;
 
 
 
@@ -19,10 +21,15 @@ namespace BookingAppV2.Services
   {
 
     private readonly dbAccess _dbAccess;
-
-    public BookingService(dbAccess dbAccess)
+    private readonly BookingService _bookingService;
+    private readonly ItemService _itemService;
+    public BookingService(dbAccess dbAccess,
+                          BookingService bookingService,
+                          ItemService itemService)
     {
       _dbAccess = dbAccess;
+      _bookingService = bookingService;
+      _itemService = itemService;
     }
     public Booking? GetBookingById(int id)
     {
@@ -199,6 +206,8 @@ namespace BookingAppV2.Services
                ORDER BY b.date_requested ASC";
       return query;
     }
+
+  
 
 
   }

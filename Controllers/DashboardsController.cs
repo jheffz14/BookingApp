@@ -190,7 +190,6 @@ namespace BookingAppV2.Controllers
       {
         scheduleQuery = _bookingService.GetDBSchedAdminQuery();
       }
-
       DataTable scheduleDt = _dbAccess.ExecuteQueryBooking(scheduleQuery, scheduleParams);
 
       var schedule = new List<object>();

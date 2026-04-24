@@ -423,3 +423,5 @@ ASALocalRun/
 appsettings.Development.json
 appsettings.json
 
+#Connection_String
+Connection_String.cs
