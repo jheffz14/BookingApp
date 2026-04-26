@@ -21,14 +21,12 @@ namespace BookingAppV2.Services
   {
 
     private readonly dbAccess _dbAccess;
-    private readonly BookingService _bookingService;
+   
     private readonly ItemService _itemService;
     public BookingService(dbAccess dbAccess,
-                          BookingService bookingService,
                           ItemService itemService)
     {
       _dbAccess = dbAccess;
-      _bookingService = bookingService;
       _itemService = itemService;
     }
     public Booking? GetBookingById(int id)
